@@ -33,7 +33,7 @@ const AppSidebar = () => {
   return (
     <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
       <div className="p-4 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold text-sidebar-primary tracking-tight">
+        <h1 className="text-lg font-bold text-sidebar-secondary tracking-tight">
           GRC Control Tool
         </h1>
       </div>
@@ -46,8 +46,8 @@ const AppSidebar = () => {
               to={item.to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-black text-white"
+              : "text-sidebar-foreground hover:bg-sidebar-accent"
               }`}
             >
               <item.icon className="w-4 h-4" />

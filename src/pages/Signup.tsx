@@ -27,7 +27,7 @@ const Signup = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="John Doe" required />
+              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Wunmi Lolace" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="org">Organization</Label>
