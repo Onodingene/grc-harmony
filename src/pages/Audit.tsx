@@ -1,56 +1,153 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-
-const sampleAudits = [
-  { id: "AUD-001", title: "Q1 MCS Compliance Audit", scope: "All Controls", status: "Fieldwork", lead: "Oluwaseun Oyedepo", startDate: "2026-03-01" },
-  { id: "AUD-002", title: "Annual ICOFR Review", scope: "Financial Controls", status: "Planned", lead: "Ramakant Patil", startDate: "2026-06-01" },
+const auditDomains = [
+  {
+    name: "Governance & Compliance",
+    items: [
+      {
+        id: "MCS01",
+        title: "Code of Business Conduct & Speak-up Culture",
+        owner: "Omoyemi Tuga",
+        risk: "Corruption, bribery, unethical conduct",
+      },
+      {
+        id: "MCS03",
+        title: "Related Party Transactions & COI",
+        owner: "Mary Waititu",
+        risk: "Conflict of interest, weak governance",
+      },
+      {
+        id: "MCS04",
+        title: "Board Secretarial Requirements",
+        owner: "Mary Waititu",
+        risk: "Lack of board oversight",
+      },
+    ],
+  },
+  {
+    name: "Finance & Reporting",
+    items: [
+      {
+        id: "MCS43",
+        title: "Bank Account Reconciliations",
+        owner: "Finance Controller",
+        risk: "Financial misstatement",
+      },
+      {
+        id: "MCS29",
+        title: "Vendor Onboarding Compliance",
+        owner: "Finance Controller",
+        risk: "Fraud, invalid vendors",
+      },
+      {
+        id: "MCS12",
+        title: "Segregation of Duties",
+        owner: "Internal Audit",
+        risk: "Unauthorized transactions",
+      },
+    ],
+  },
+  {
+    name: "Procurement & AP",
+    items: [
+      {
+        id: "MCS32",
+        title: "Invoice Processing & PO Matching",
+        owner: "Procurement",
+        risk: "Payments without approval",
+      },
+      {
+        id: "MCS34",
+        title: "Supplier Master Data Management",
+        owner: "Procurement",
+        risk: "Duplicate or fake suppliers",
+      },
+    ],
+  },
+  {
+    name: "Inventory & Operations",
+    items: [
+      {
+        id: "MCS08",
+        title: "Insurance Coverage Monitoring",
+        owner: "Admin",
+        risk: "Uninsured operational risks",
+      },
+      {
+        id: "MCS34",
+        title: "Stock Count & Valuation",
+        owner: "Operations",
+        risk: "Inventory misstatement",
+      },
+    ],
+  },
 ];
 
-const statusColors: Record<string, string> = {
-  Planned: "bg-secondary text-muted-foreground",
-  Fieldwork: "bg-blue-100 text-blue-800",
-  Reporting: "bg-yellow-100 text-yellow-800",
-  Issued: "bg-green-100 text-green-800",
-};
+const Audit = () => {
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <h1 className="text-lg font-semibold">
+        Monthly Audit Program & Checklist
+      </h1>
 
-const Audit = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold">Audit</h1>
-        <p className="text-muted-foreground text-sm">Plan and execute internal audits with evidence tracking.</p>
+      {/* MAIN CARD */}
+      <div className="bg-white rounded-lg shadow-sm border p-6 space-y-8">
+        <h2 className="text-sm font-semibold">
+          Monthly Audit Procedures by Domain
+        </h2>
+
+        {/* DOMAINS */}
+        {auditDomains.map((domain) => (
+          <div key={domain.name} className="space-y-4">
+            {/* DOMAIN TITLE */}
+            <h3 className="text-sm font-semibold text-blue-600">
+              {domain.name}
+            </h3>
+
+            {/* ITEMS */}
+            {domain.items.map((a) => (
+              <div
+                key={a.id}
+                className="bg-gray-50 border rounded-md p-4 space-y-2"
+              >
+                {/* TITLE */}
+                <h4 className="text-sm font-semibold">
+                  {a.id}: {a.title}
+                </h4>
+
+                {/* META */}
+                <p className="text-xs text-muted-foreground">
+                  Owner: {a.owner} | Frequency: Monthly
+                </p>
+
+                {/* RISK */}
+                <p className="text-xs">
+                  <span className="font-medium">Risk:</span> {a.risk}
+                </p>
+
+                {/* STEPS */}
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Audit Steps:</p>
+
+                  <ol className="list-decimal ml-4 space-y-1">
+                    <li>Verify control design and documentation</li>
+                    <li>Test a sample of transactions/items</li>
+                    <li>Review and validate supporting evidence</li>
+                    <li>Confirm compliance with policy requirements</li>
+                    <li>Document findings and exceptions</li>
+                  </ol>
+                </div>
+
+                {/* OPTIONAL FOOT NOTE */}
+                <div className="text-[10px] text-gray-400 pt-1">
+                  Last Reviewed: March 2026
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
-      <Button><Plus className="w-4 h-4 mr-1" /> New Audit</Button>
     </div>
-    <div className="rounded-lg border bg-card overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-primary/10">
-            <TableHead>Audit ID</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Scope</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Lead</TableHead>
-            <TableHead>Start Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sampleAudits.map((a) => (
-            <TableRow key={a.id}>
-              <TableCell className="font-semibold">{a.id}</TableCell>
-              <TableCell>{a.title}</TableCell>
-              <TableCell>{a.scope}</TableCell>
-              <TableCell><Badge className={statusColors[a.status]}>{a.status}</Badge></TableCell>
-              <TableCell>{a.lead}</TableCell>
-              <TableCell>{a.startDate}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  </div>
-);
+  );
+};
 
 export default Audit;

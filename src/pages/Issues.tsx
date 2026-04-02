@@ -1,57 +1,196 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-const ratingColors: Record<string, string> = {
-  Critical: "bg-red-600 text-white",
-  High: "bg-red-100 text-red-800",
-  Medium: "bg-yellow-100 text-yellow-800",
-  Low: "bg-green-100 text-green-800",
-};
-
-const sampleIssues = [
-  { id: "ISS-001", title: "Missing SOD review for finance", control: "MCS12", rating: "High", status: "Open", owner: "Theophilus Okolie" },
-  { id: "ISS-002", title: "Expired insurance policy", control: "MCS08", rating: "Critical", status: "In Progress", owner: "Victory Olumuyiwa" },
-  { id: "ISS-003", title: "Late CoBC distribution", control: "MCS01", rating: "Medium", status: "Open", owner: "Omoyemi Tuga" },
+const issues = [
+  {
+    id: "ISS-1774018274767",
+    control: "MCS43",
+    description: "Exception on test",
+    severity: "Medium",
+    date: "20/03/2026",
+    owner: "Finance Controller",
+    due: "19/04/2026",
+    age: 4,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774107285530",
+    control: "MCS34",
+    description:
+      "Stock count not performed for 2 locations. 500 missing items identified in warehouse. Valuation inaccurate.",
+    severity: "Medium",
+    date: "21/03/2026",
+    owner: "Operations",
+    due: "20/04/2026",
+    age: 3,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774122616450",
+    control: "MCS29",
+    description:
+      "4 vendors registered without Bank letter, TIN, and CAC documentation.",
+    severity: "Medium",
+    date: "21/03/2026",
+    owner: "Finance Controller",
+    due: "20/04/2026",
+    age: 3,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774193914248",
+    control: "MCS32",
+    description: "Invoice processed without PO attached.",
+    severity: "High",
+    date: "22/03/2026",
+    owner: "Finance Controller",
+    due: "21/04/2026",
+    age: 2,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774194112542",
+    control: "MCS32",
+    description:
+      "Invoices paid were not submitted via IMS and missing PO attachments.",
+    severity: "High",
+    date: "22/03/2026",
+    owner: "@fongu",
+    due: "31/03/2026",
+    age: 2,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774301123456",
+    control: "MCS08",
+    description: "Insurance policy expired without renewal.",
+    severity: "Critical",
+    date: "23/03/2026",
+    owner: "Admin",
+    due: "25/03/2026",
+    age: 1,
+    status: "Open",
+  },
+  {
+    id: "ISS-1774309987123",
+    control: "MCS12",
+    description:
+      "Segregation of duties conflict detected in finance approvals.",
+    severity: "High",
+    date: "24/03/2026",
+    owner: "Internal Audit",
+    due: "30/04/2026",
+    age: 1,
+    status: "Open",
+  },
 ];
 
-const Issues = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold">Issues</h1>
-        <p className="text-muted-foreground text-sm">Track and remediate control deficiencies.</p>
+const getSeverity = (s) => {
+  if (s === "High") return "bg-red-100 text-red-700";
+  if (s === "Medium") return "bg-yellow-100 text-yellow-700";
+  return "bg-green-100 text-green-700";
+};
+
+const Issues = () => {
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-semibold">Issues Log</h1>
+
+        <div className="flex gap-2">
+          <Button className="bg-[#f9d75c] text-black">
+            <Plus className="w-4 h-4 mr-1" />
+            Add Issue
+          </Button>
+          <Button variant="outline">Export CSV</Button>
+        </div>
       </div>
-      <Button><Plus className="w-4 h-4 mr-1" /> Log Issue</Button>
+
+      {/* CARD */}
+      <div className="bg-white rounded-lg shadow-sm border p-4 space-y-4">
+        {/* SEARCH + FILTER */}
+        <div className="flex gap-2">
+          <input
+            placeholder="Search issues..."
+            className="flex-1 border rounded-md px-3 py-2 text-sm"
+          />
+          <select className="border px-3 py-2 rounded-md text-sm bg-white">
+            <option>All Status</option>
+          </select>
+          <select className="border px-3 py-2 rounded-md text-sm bg-white">
+            <option>All Severity</option>
+          </select>
+        </div>
+
+        {/* TABLE */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-[#f9d75c] text-left">
+              <tr>
+                <th className="p-2">Issue ID</th>
+                <th>Control ID</th>
+                <th>Description</th>
+                <th>Severity</th>
+                <th>Date Raised</th>
+                <th>Owner</th>
+                <th>Due Date</th>
+                <th>Age (Days)</th>
+                <th>Status</th>
+                <th>RAG</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {issues.map((i) => (
+                <tr key={i.id} className="border-b hover:bg-gray-50 h-14">
+                  <td className="p-2 font-medium">{i.id}</td>
+                  <td>{i.control}</td>
+                  <td className="max-w-[250px]">{i.description}</td>
+
+                  {/* SEVERITY */}
+                  <td>
+                    <span
+                      className={`px-2 py-1 rounded-full text-[10px] ${getSeverity(
+                        i.severity
+                      )}`}
+                    >
+                      {i.severity}
+                    </span>
+                  </td>
+
+                  <td>{i.date}</td>
+                  <td>{i.owner}</td>
+                  <td>{i.due}</td>
+                  <td>{i.age}</td>
+
+                  {/* STATUS */}
+                  <td>
+                    <span className="px-2 py-1 rounded-full text-[10px] bg-red-100 text-red-700">
+                      {i.status}
+                    </span>
+                  </td>
+
+                  {/* RAG DOT */}
+                  <td>
+                    <div className="w-3 h-3 rounded-full bg-green-500 mx-auto" />
+                  </td>
+
+                  {/* ACTION */}
+                  <td>
+                    <button className="text-xs px-2 py-1 border rounded-md hover:bg-gray-100">
+                      Update
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div className="rounded-lg border bg-card overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-primary/10">
-            <TableHead>Issue ID</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Control</TableHead>
-            <TableHead>Rating</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Owner</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sampleIssues.map((i) => (
-            <TableRow key={i.id}>
-              <TableCell className="font-semibold">{i.id}</TableCell>
-              <TableCell>{i.title}</TableCell>
-              <TableCell>{i.control}</TableCell>
-              <TableCell><Badge className={ratingColors[i.rating]}>{i.rating}</Badge></TableCell>
-              <TableCell><Badge variant="outline">{i.status}</Badge></TableCell>
-              <TableCell>{i.owner}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  </div>
-);
+  );
+};
 
 export default Issues;

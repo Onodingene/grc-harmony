@@ -31,23 +31,22 @@ const AppSidebar = () => {
   const location = useLocation();
 
   return (
-    <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
-      <div className="p-4 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold text-sidebar-primary tracking-tight">
-          GRC Control Tool
-        </h1>
+    <aside className="w-56 min-h-screen flex flex-col shrink-0 py-1">
+      <div className="p-4 bg-white flex items-center justify-center">
+        <h1 className="text-lg font-bold tracking-tight">Sun King</h1>
       </div>
-      <nav className="flex-1 py-2 space-y-0.5 px-2">
+
+      <nav className="flex-1 py-2 space-y-0.5 px-2 bg-[#f9d75c]">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 py-2.5 text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  ? "bg-[#f2c94c] text-black border-l-4 border-black pl-4"
+                  : "text-black hover:bg-[#f7d96f]"
               }`}
             >
               <item.icon className="w-4 h-4" />
