@@ -11,6 +11,7 @@ import {
   Search,
   CalendarDays,
   Settings,
+  CreditCard,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { to: "/audit", label: "Audit", icon: Search },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/billing", label: "Billing", icon: CreditCard },
 ];
 
 const AppSidebar = () => {
