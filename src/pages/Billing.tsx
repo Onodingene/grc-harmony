@@ -78,7 +78,7 @@ const Billing = () => {
                   </>
                 ) : (
                   <>
-                    <Badge className="mt-1 bg-green-600 text-white">ACTIVE</Badge>
+                    <Badge className="mt-1 bg-primary text-primary-foreground">ACTIVE</Badge>
                     <p className="text-sm text-muted-foreground mt-1">
                       Plan: <span className="font-medium text-foreground">{currentPlan}</span>
                     </p>
