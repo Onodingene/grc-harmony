@@ -37,7 +37,7 @@ const Landing = () => {
       {/* Top utility bar — mustard */}
       <div style={{ background: MUSTARD }} className="text-black text-xs py-2 px-8 hidden md:flex justify-end gap-6">
         <a href="#" className="hover:underline font-semibold">Documentation</a>
-        <a href="#" className="hover:underline font-semibold">Pricing</a>
+        <Link to="/pricing" className="hover:underline font-semibold">Pricing</Link>
         <a href="#" className="hover:underline font-semibold">Support</a>
       </div>
 
