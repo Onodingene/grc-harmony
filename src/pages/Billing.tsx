@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CreditCard, Users, ArrowLeft, Check } from "lucide-react";
+import { CreditCard, Users, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const plans = [
@@ -13,6 +13,7 @@ const plans = [
     period: "month",
     seats: 10,
     description: "Up to 10 active users",
+    downgradeNote: "Downgrades are not available here. Cancel your subscription if you need a smaller tier.",
     features: ["MCS Controls Management", "Basic Testing Module", "Issue Tracking", "CSV Export", "Email Support"],
   },
   {
@@ -21,6 +22,7 @@ const plans = [
     period: "month",
     seats: 50,
     description: "Up to 50 active users",
+    downgradeNote: "Downgrades are not available here. Cancel your subscription if you need a smaller tier.",
     features: ["Everything in Starter", "ICOFR Testing Workflows", "Monthly Reporting", "Audit Trail", "Priority Support"],
   },
   {
@@ -29,6 +31,7 @@ const plans = [
     period: "month",
     seats: 200,
     description: "Up to 200 active users",
+    downgradeNote: "",
     features: ["Everything in Growth", "Multi-entity Support", "Risk Heat Maps & Analytics", "API Access", "Dedicated Account Manager"],
   },
 ];
@@ -40,6 +43,8 @@ const Billing = () => {
   const trialDaysLeft = 14;
   const activeSeats = 1;
   const totalSeats = 200;
+
+  const planIndex = (name: string) => plans.findIndex((p) => p.name === name);
 
   return (
     <div className="space-y-6">
@@ -53,7 +58,7 @@ const Billing = () => {
       <div>
         <h1 className="text-2xl font-bold">Billing &amp; Subscription</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage your plan and billing. Checkout opens in a secure payment window; your plan renews each billing period until you cancel it.
+          Paystack-powered plans by user seats. To cancel a paid plan, open the <span className="font-semibold text-foreground">Current status</span> section below and use <span className="font-semibold text-foreground">Cancel subscription</span>.
         </p>
       </div>
 
@@ -80,7 +85,7 @@ const Billing = () => {
                   <>
                     <Badge className="mt-1 bg-primary text-primary-foreground">ACTIVE</Badge>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Plan: <span className="font-medium text-foreground">{currentPlan}</span>
+                      Plan: <span className="font-medium text-foreground">{currentPlan} (up to {plans.find(p => p.name === currentPlan)?.seats} active users)</span>
                     </p>
                   </>
                 )}
@@ -108,21 +113,25 @@ const Billing = () => {
       <div>
         <h2 className="text-xl font-bold">Choose a plan</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Pick a tier based on how many active users you need. All plans include a 14-day free trial.
+          Pick a tier based on how many active users you need. Checkout opens in a secure Paystack window; your plan renews each billing period until you cancel it.
         </p>
         <p className="text-sm text-destructive mt-1">
-          Upgrading ends your current plan first, then opens checkout. If you leave without paying, you will need to subscribe again.
+          Upgrading ends your current Paystack subscription first, then opens checkout. If you leave Paystack without paying, you will need to subscribe again.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {plans.map((plan) => {
           const isCurrent = currentPlan === plan.name;
+          const isLowerTier = currentPlan ? planIndex(plan.name) < planIndex(currentPlan) : false;
+
           return (
             <Card
               key={plan.name}
               className={`relative border transition-colors ${
-                isCurrent ? "border-primary bg-accent/30" : "border-border hover:border-primary/50"
+                isCurrent
+                  ? "border-primary bg-accent/20"
+                  : "border-border hover:border-primary/50"
               }`}
             >
               <CardHeader className="pb-3">
@@ -130,38 +139,33 @@ const Billing = () => {
                   {plan.name}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
+                {isCurrent ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    Current plan — subscription is already active for this tier.
+                  </p>
+                ) : isLowerTier ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    {plan.downgradeNote}
+                  </p>
+                ) : null}
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <span className="text-3xl font-bold">${plan.price}</span>
-                  <span className="text-muted-foreground text-sm">/{plan.period}</span>
-                </div>
-
-                <ul className="space-y-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
+              <CardContent className="pt-0">
                 {isCurrent ? (
                   <Button className="w-full bg-primary text-primary-foreground" disabled>
                     Current plan
                   </Button>
+                ) : isLowerTier ? (
+                  <Button className="w-full bg-primary/60 text-primary-foreground" disabled>
+                    Not available
+                  </Button>
                 ) : trialActive ? (
-                  <Button className="w-full">Start 14-day trial</Button>
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    Start 14-day trial
+                  </Button>
                 ) : (
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                     Upgrade
                   </Button>
-                )}
-
-                {isCurrent && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Current plan — subscription is already active for this tier.
-                  </p>
                 )}
               </CardContent>
             </Card>
