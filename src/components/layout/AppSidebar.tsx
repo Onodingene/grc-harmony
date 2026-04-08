@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Globe,
@@ -12,7 +12,10 @@ import {
   CalendarDays,
   Settings,
   CreditCard,
+  User,
+  LogOut,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +34,11 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate("/login");
+  };
 
   return (
     <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
@@ -58,6 +66,27 @@ const AppSidebar = () => {
           );
         })}
       </nav>
+      <div className="px-2 pb-3">
+        <Separator className="mb-2" />
+        <NavLink
+          to="/profile"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+            location.pathname === "/profile"
+              ? "bg-black text-white"
+              : "text-sidebar-foreground hover:bg-sidebar-accent"
+          }`}
+        >
+          <User className="w-4 h-4" />
+          Profile
+        </NavLink>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent w-full text-left"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };
