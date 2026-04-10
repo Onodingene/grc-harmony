@@ -20,6 +20,7 @@ import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,11 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/*"  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>}
+/>
             <Route path="/consolidated" element={<Consolidated />} />
             <Route path="/controls" element={<Controls />} />
             <Route path="/test-plan" element={<TestPlan />} />

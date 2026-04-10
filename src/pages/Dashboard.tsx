@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, AlertTriangle, CheckCircle, Clock, Users, Settings, BarChart3, Lock } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabaseClient";
 
 const adminStats = [
   { label: "Total Controls", value: "48", icon: Shield, trend: "+3 this month" },
@@ -29,23 +30,22 @@ const recentActivity = [
 
 const Dashboard = () => {
   const [role] = useState<"admin" | "owner">("admin");
+  const [fullName, setFullName] = useState("");
 
-  const stats = role === "admin" ? adminStats : ownerStats;
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setFullName(user?.user_metadata?.full_name || "");
+    };
+    getUser();
+  }, []);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Tabs defaultValue="admin" onValueChange={() => {}}>
-          <TabsList>
-            <TabsTrigger value="admin" className="text-xs">
-              <Lock className="w-3 h-3 mr-1" /> Admin View
-            </TabsTrigger>
-            <TabsTrigger value="owner" className="text-xs">
-              <Users className="w-3 h-3 mr-1" /> Control Owner View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+
+      <div>
+        <h1 className="text-2xl font-bold">Welcome, {fullName} 👋</h1>
+        <p className="text-muted-foreground text-sm mt-1">Here's what's happening across your controls today.</p>
       </div>
 
       <Tabs defaultValue="admin">
