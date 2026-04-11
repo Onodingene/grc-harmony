@@ -32,7 +32,7 @@ const plans = [
     seats: 200,
     description: "Up to 200 active users",
     downgradeNote: "",
-    features: ["Everything in Growth", "Multi-entity Support", "Risk Heat Maps & Analytics", "API Access", "Dedicated Account Manager"],
+    features: ["Everything in Growth", "Multi-entity Support", "API Access", "Dedicated Account Manager"],
   },
 ];
 
@@ -48,12 +48,6 @@ const Billing = () => {
 
   return (
     <div className="space-y-6">
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back to dashboard
-      </button>
 
       <div>
         <h1 className="text-2xl font-bold">Billing &amp; Subscription</h1>

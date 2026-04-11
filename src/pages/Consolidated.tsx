@@ -171,13 +171,6 @@ const CountryDetail = ({ country, onBack }: { country: Country; onBack: () => vo
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Consolidated View
-      </button>
 
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">

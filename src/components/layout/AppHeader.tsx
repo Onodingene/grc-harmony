@@ -28,6 +28,7 @@ const AppHeader = () => {
               <SelectItem value="ng">Nigeria</SelectItem>
               <SelectItem value="ke">Kenya</SelectItem>
               <SelectItem value="ug">Uganda</SelectItem>
+             < SelectItem value="ug">Ghana</SelectItem>
             </SelectContent>
           </Select>
         </div>

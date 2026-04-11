@@ -72,7 +72,6 @@ const plans = [
       "Up to 200 active users",
       "Everything in Growth",
       "Multi-entity Support",
-      "Risk Heat Maps & Analytics",
       "API Access",
       "Dedicated Account Manager",
       "SSO Integration",
@@ -91,7 +90,6 @@ const comparisonFeatures = [
   { name: "Monthly Reporting", free: false, starter: false, growth: true, scale: true },
   { name: "Audit Trail", free: false, starter: false, growth: true, scale: true },
   { name: "Multi-entity Support", free: false, starter: false, growth: false, scale: true },
-  { name: "Risk Heat Maps", free: false, starter: false, growth: false, scale: true },
   { name: "API Access", free: false, starter: false, growth: false, scale: true },
   { name: "SSO Integration", free: false, starter: false, growth: false, scale: true },
   { name: "Support", free: "Community", starter: "Email", growth: "Priority", scale: "Dedicated AM" },
@@ -120,9 +118,6 @@ const Pricing = () => {
             <span className="text-base font-bold text-white tracking-tight">GRC Control Tool</span>
           </Link>
           <div className="flex gap-3">
-            <Link to="/" className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" /> Home
-            </Link>
             <Link to="/login">
               <Button variant="ghost" className="text-gray-400 hover:text-white text-sm">Sign in</Button>
             </Link>

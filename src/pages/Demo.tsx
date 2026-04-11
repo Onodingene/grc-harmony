@@ -72,7 +72,7 @@ const Demo = () => {
                     <Label className="text-gray-300 text-sm">First Name</Label>
                     <Input
                       className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-yellow-500"
-                      placeholder="John"
+                      placeholder="Kamsi"
                       value={form.firstName}
                       onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                     />
@@ -81,7 +81,7 @@ const Demo = () => {
                     <Label className="text-gray-300 text-sm">Last Name</Label>
                     <Input
                       className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-yellow-500"
-                      placeholder="Doe"
+                      placeholder="Ileta"
                       value={form.lastName}
                       onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                     />
@@ -92,7 +92,7 @@ const Demo = () => {
                   <Input
                     type="email"
                     className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-yellow-500"
-                    placeholder="john@company.com"
+                    placeholder="kamsi@company.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                   />
