@@ -4,21 +4,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useLocation } from "react-router-dom";
+
+
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+const message = location.state?.message;
 
-  const handleSubmit = (e: React.FormEvent) => {
+// then in your JSX, above the form:
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: integrate with auth
+    setError(null);
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
     navigate("/dashboard");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
+        {message && <p className="text-sm text-destructive text-center">{message}</p>}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
             <span className="text-primary">GRC</span> Control Tool
@@ -35,7 +58,10 @@ const Login = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
             </div>
-            <Button type="submit" className="w-full">Sign In</Button>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
           </form>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Don't have an account?{" "}

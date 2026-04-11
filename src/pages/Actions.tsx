@@ -1,29 +1,48 @@
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Download } from "lucide-react";
+import { exportToCSV } from "@/lib/csv-export";
 
-const actions = [
-  {
-    id: "ACT-1774107567141",
-    issue: "ISS-1774107285530",
-    description:
-      "Ensure inventory in locations 2 and 3 is carried properly. Revaluation to be done using FIFO.",
-    owner: "@yomi",
-    due: "31/03/2026",
-    progress: 70,
-    status: "In Progress",
-    update: "21/03/2026",
-  },
-  {
-    id: "ACT-1774194199463",
-    issue: "ISS-1774193914248",
-    description: "Action closed",
-    owner: "@fongu",
-    due: "31/03/2026",
-    progress: 100,
-    status: "Completed",
-    update: "22/03/2026",
-  },
-];
+interface Action {
+  id: string;
+  description: string;
+  issue: string;
+  dueDate: string;
+  status: string;
+  owner: string;
+}
+
+const statusColors: Record<string, string> = {
+  Open: "bg-yellow-100 text-yellow-800",
+  "In Progress": "bg-blue-100 text-blue-800",
+  Complete: "bg-green-100 text-green-800",
+};
 
 const getStatus = (s) => {
   if (s === "Completed") return "bg-green-100 text-green-700";
@@ -37,112 +56,170 @@ const getRAG = (progress) => {
   return "bg-red-500";
 };
 
+const initialActions: Action[] = [
+  {
+    id: "ACT-001",
+    description: "Complete SOD review for finance team",
+    issue: "ISS-001",
+    dueDate: "2026-04-15",
+    status: "In Progress",
+    owner: "Theophilus Okolie",
+  },
+  {
+    id: "ACT-002",
+    description: "Renew group insurance policy",
+    issue: "ISS-002",
+    dueDate: "2026-03-30",
+    status: "Open",
+    owner: "Victory Olumuyiwa",
+  },
+  {
+    id: "ACT-003",
+    description: "Distribute CoBC to new hires",
+    issue: "ISS-003",
+    dueDate: "2026-04-01",
+    status: "Complete",
+    owner: "Omoyemi Tuga",
+  },
+];
+
+const emptyAction: Omit<Action, "id"> = {
+  description: "",
+  issue: "",
+  dueDate: "",
+  status: "",
+  owner: "",
+};
+
 const Actions = () => {
+  const [actions, setActions] = useState<Action[]>(initialActions);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(emptyAction);
+
+  const openAdd = () => {
+    setForm(emptyAction);
+    setOpen(true);
+  };
+
+  const save = () => {
+    if (!form.description) return;
+    const nextId = `ACT-${String(actions.length + 1).padStart(3, "0")}`;
+    setActions((prev) => [...prev, { id: nextId, ...form }]);
+    setOpen(false);
+  };
+
+  const set = (key: keyof Omit<Action, "id">, value: string) =>
+    setForm({ ...form, [key]: value });
+
   return (
     <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Action Tracker</h1>
-
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Actions</h1>
+          <p className="text-muted-foreground text-sm">
+            Track remediation actions to closure.
+          </p>
+        </div>
         <div className="flex gap-2">
-          <Button className="bg-[#f9d75c] text-black">
-            <Plus className="w-4 h-4 mr-1" />
-            Add Action
+          <Button
+            variant="outline"
+            onClick={() => exportToCSV(actions, "actions")}
+          >
+            <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
-          <Button variant="outline">Export CSV</Button>
+          <Button onClick={openAdd}>
+            <Plus className="w-4 h-4 mr-1" /> Add Action
+          </Button>
         </div>
       </div>
 
-      {/* CARD */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 space-y-4">
-        {/* SEARCH */}
-        <input
-          placeholder="Search actions..."
-          className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-        />
-
-        {/* TABLE */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-[#f9d75c] text-left">
-              <tr>
-                <th className="p-2">Action ID</th>
-                <th>Issue ID</th>
-                <th className="min-w-[300px]">Action Description</th>
-                <th>Owner</th>
-                <th>Due Date</th>
-                <th>Progress</th>
-                <th>Status</th>
-                <th>RAG</th>
-                <th>Last Update</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {actions.map((a) => (
-                <tr key={a.id} className="border-b hover:bg-gray-50 h-12">
-                  <td className="px-2 py-2 font-medium w-[140px]">{a.id}</td>
-                  <td className="px-2 py-2 w-[140px]">{a.issue}</td>
-
-                  <td className="px-2 py-2 min-w-[320px] text-xs leading-snug">
-                    {a.description}
-                  </td>
-
-                  <td className="px-2 py-2 w-[100px]">{a.owner}</td>
-                  <td className="px-2 py-2 w-[110px]">{a.due}</td>
-
-                  {/* PROGRESS BAR */}
-                  <td className="px-2 py-2 w-[140px]">
-                    <div className="w-full bg-gray-200 rounded-full h-4 relative overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          a.progress === 100 ? "bg-green-500" : "bg-[#f9d75c]"
-                        }`}
-                        style={{ width: `${a.progress}%` }}
-                      />
-                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-medium">
-                        {a.progress}%
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* STATUS */}
-                  <td className="px-2 py-2 w-[120px]">
-                    <span
-                      className={`px-2 py-[2px] rounded-full text-[10px] font-medium ${
-                        a.status === "Completed"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {a.status}
-                    </span>
-                  </td>
-
-                  {/* RAG */}
-                  <td className="px-2 py-2 w-[60px] text-center">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full mx-auto ${
-                        a.progress === 100 ? "bg-green-500" : "bg-yellow-400"
-                      }`}
-                    />
-                  </td>
-
-                  <td className="px-2 py-2 w-[110px]">{a.update}</td>
-
-                  {/* ACTION */}
-                  <td className="px-2 py-2 w-[80px]">
-                    <button className="text-[10px] px-2 py-[2px] border rounded hover:bg-gray-100">
-                      Update
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-primary/10">
+              <TableHead>Action ID</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Issue</TableHead>
+              <TableHead>Due Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Owner</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {actions.map((a) => (
+              <TableRow key={a.id}>
+                <TableCell className="font-semibold">{a.id}</TableCell>
+                <TableCell>{a.description}</TableCell>
+                <TableCell>{a.issue}</TableCell>
+                <TableCell>{a.dueDate}</TableCell>
+                <TableCell>
+                  <Badge className={statusColors[a.status]}>{a.status}</Badge>
+                </TableCell>
+                <TableCell>{a.owner}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Action</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Description</Label>
+              <Textarea
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Related Issue</Label>
+              <Input
+                value={form.issue}
+                onChange={(e) => set("issue", e.target.value)}
+                placeholder="e.g. ISS-001"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => set("dueDate", e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Status</Label>
+              <Select
+                value={form.status}
+                onValueChange={(v) => set("status", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Open">Open</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Complete">Complete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Owner</Label>
+              <Input
+                value={form.owner}
+                onChange={(e) => set("owner", e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={save}>Save Action</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
