@@ -37,9 +37,7 @@ const Demo = () => {
             </div>
             <span className="text-base font-bold text-white tracking-tight">GRC Control Tool</span>
           </Link>
-          <Link to="/" className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Back to home
-          </Link>
+
         </div>
       </nav>
 

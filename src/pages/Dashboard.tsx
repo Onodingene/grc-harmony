@@ -12,7 +12,6 @@ const adminStats = [
   { label: "Tests Passed", value: "89%", icon: CheckCircle, trend: "↑ 5% from last month" },
   { label: "Pending Actions", value: "7", icon: Clock, trend: "3 overdue" },
   { label: "Active Users", value: "24", icon: Users, trend: "6 control owners" },
-  { label: "System Health", value: "99.9%", icon: Settings, trend: "All services running" },
 ];
 
 const ownerStats = [
@@ -66,20 +65,6 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card className="shadow-sm">
-                <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Control Effectiveness</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Chart placeholder — connect data source</div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm">
-                <CardHeader><CardTitle className="text-base">Risk Heat Map</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Heat map placeholder — connect data source</div>
-                </CardContent>
-              </Card>
-            </div>
 
             <Card className="shadow-sm">
               <CardHeader><CardTitle className="text-base">Recent Activity (All Users)</CardTitle></CardHeader>
