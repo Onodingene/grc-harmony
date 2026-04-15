@@ -25,7 +25,7 @@ const navItems = [
   { to: "/testing", label: "Testing", icon: ClipboardCheck },
   { to: "/monthly-report", label: "Monthly Report", icon: FileBarChart },
   { to: "/issues", label: "Issues", icon: AlertTriangle },
-  { to: "/actions", label: "Actions", icon: Zap },
+  // { to: "/actions", label: "Actions", icon: Zap },
   { to: "/audit", label: "Audit", icon: Search },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -56,8 +56,8 @@ const AppSidebar = () => {
               to={item.to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 isActive
-              ? "bg-black text-white"
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  ? "bg-black text-white"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent"
               }`}
             >
               <item.icon className="w-4 h-4" />
