@@ -191,10 +191,10 @@ const Controls = () => {
               </div>
               <div className="grid gap-1.5">
                 <Label>Assign Tester (Email)</Label>
-                <Select value={form.tester} onValueChange={(v) => setForm({ ...form, tester: v })}>
+                <Select value={form.tester || "unassigned"} onValueChange={(v) => setForm({ ...form, tester: v === "unassigned" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select tester" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {teamEmails.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                   </SelectContent>
                 </Select>
