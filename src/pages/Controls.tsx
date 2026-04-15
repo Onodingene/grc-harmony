@@ -194,7 +194,7 @@ const Controls = () => {
                 <Select value={form.tester} onValueChange={(v) => setForm({ ...form, tester: v })}>
                   <SelectTrigger><SelectValue placeholder="Select tester" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {teamEmails.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                   </SelectContent>
                 </Select>

@@ -14,7 +14,7 @@ const Billing = () => {
   const trialDaysLeft = 14;
   const activeSeats = 1;
   const freeSeats = 25;
-  const pricePerSeat = yearly ? 8 : 10;
+  const pricePerSeat = yearly ? 100 : 125;
 
   const extraSeats = Math.max(0, activeSeats - freeSeats);
   const monthlyCost = extraSeats * pricePerSeat;
