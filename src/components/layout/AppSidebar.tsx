@@ -25,7 +25,6 @@ const navItems = [
   { to: "/testing", label: "Testing", icon: ClipboardCheck },
   { to: "/monthly-report", label: "Monthly Report", icon: FileBarChart },
   { to: "/issues", label: "Issues", icon: AlertTriangle },
-  { to: "/actions", label: "Actions", icon: Zap },
   { to: "/audit", label: "Audit", icon: Search },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
