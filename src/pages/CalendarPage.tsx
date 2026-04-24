@@ -47,20 +47,12 @@ const allControls: MCSControl[] = [
   },
 ];
 
-const monthsData = [
-  { name: "January", index: 0 },
-  { name: "February", index: 1 },
-  { name: "March", index: 2 },
-  { name: "April", index: 3 },
-  { name: "May", index: 4 },
-  { name: "June", index: 5 },
-  { name: "July", index: 6 },
-  { name: "August", index: 7 },
-  { name: "September", index: 8 },
-  { name: "October", index: 9 },
-  { name: "November", index: 10 },
-  { name: "December", index: 11 },
-];
+// Build the 12-month sequence starting from the company's financial year start month.
+const buildMonths = (fyStart: number) =>
+  Array.from({ length: 12 }, (_, i) => {
+    const idx = (fyStart + i) % 12;
+    return { name: MONTH_NAMES[idx], index: idx };
+  });
 
 // Frequency logic
 const shouldAuditInMonth = (
