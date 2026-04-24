@@ -216,6 +216,21 @@ const SettingsPage = () => {
   const [deleteCountryOpen, setDeleteCountryOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
 
+  // Financial Year start month
+  const [fyMonth, setFyMonth] = useState<number>(getFYStartMonth());
+  useEffect(() => {
+    setFyMonth(getFYStartMonth());
+  }, []);
+  const handleFYChange = (m: string) => {
+    const n = parseInt(m, 10);
+    setFyMonth(n);
+    setFYStartMonth(n);
+    toast({
+      title: "Financial Year Updated",
+      description: `Audit calendar now starts in ${MONTH_NAMES[n]}`,
+    });
+  };
+
   // Team Handlers (unchanged)
   const handleInvite = () => {
     if (!inviteEmail || !inviteName) return;
