@@ -669,6 +669,35 @@ const SettingsPage = () => {
             </Table>
           </div>
         </TabsContent>
+
+        {/* ── Financial Year Tab ── */}
+        <TabsContent value="financial-year" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Year Start</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-md">
+              <p className="text-sm text-muted-foreground">
+                Set the month your financial year begins. The annual audit calendar will follow this order.
+              </p>
+              <div>
+                <label className="text-sm font-medium">Start Month</label>
+                <Select value={String(fyMonth)} onValueChange={handleFYChange}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MONTH_NAMES.map((m, i) => (
+                      <SelectItem key={m} value={String(i)}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <span className="font-medium">Current FY:</span>{" "}
+                {MONTH_NAMES[fyMonth]} → {MONTH_NAMES[(fyMonth + 11) % 12]}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* ── Invite Dialog (unchanged) ── */}
