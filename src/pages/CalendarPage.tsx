@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { getFYStartMonth, MONTH_NAMES } from "@/lib/financial-year";
 
 interface MCSControl {
   controlId: string;
@@ -46,20 +47,12 @@ const allControls: MCSControl[] = [
   },
 ];
 
-const monthsData = [
-  { name: "January", index: 0 },
-  { name: "February", index: 1 },
-  { name: "March", index: 2 },
-  { name: "April", index: 3 },
-  { name: "May", index: 4 },
-  { name: "June", index: 5 },
-  { name: "July", index: 6 },
-  { name: "August", index: 7 },
-  { name: "September", index: 8 },
-  { name: "October", index: 9 },
-  { name: "November", index: 10 },
-  { name: "December", index: 11 },
-];
+// Build the 12-month sequence starting from the company's financial year start month.
+const buildMonths = (fyStart: number) =>
+  Array.from({ length: 12 }, (_, i) => {
+    const idx = (fyStart + i) % 12;
+    return { name: MONTH_NAMES[idx], index: idx };
+  });
 
 // Frequency logic
 const shouldAuditInMonth = (
@@ -177,6 +170,20 @@ const MonthCard = ({ month, index }: { month: string; index: number }) => {
 };
 
 const CalendarPage = () => {
+  const [fyStart, setFyStart] = useState<number>(getFYStartMonth());
+
+  useEffect(() => {
+    const handler = () => setFyStart(getFYStartMonth());
+    window.addEventListener("fy-start-changed", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("fy-start-changed", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  const monthsData = buildMonths(fyStart);
+
   return (
     <div className="p-6 space-y-8">
       {/* Header + Legend */}
@@ -185,7 +192,8 @@ const CalendarPage = () => {
           Annual Audit Calendar
         </h1>
         <p className="text-gray-500 mt-1">
-          Controls scheduled for testing based on their audit frequency
+          Controls scheduled for testing based on their audit frequency.
+          Financial year starts in <span className="font-medium text-gray-900">{MONTH_NAMES[fyStart]}</span>.
         </p>
 
         {/* Soft Legend */}
