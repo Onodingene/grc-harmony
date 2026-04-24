@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getFYStartMonth, setFYStartMonth, MONTH_NAMES } from "@/lib/financial-year";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -363,6 +364,7 @@ const SettingsPage = () => {
           <TabsTrigger value="team">Team Members</TabsTrigger>
           <TabsTrigger value="controls">MCS Controls</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
+          <TabsTrigger value="financial-year">Financial Year</TabsTrigger>
         </TabsList>
 
         {/* ── Team Members Tab (unchanged) ── */}
