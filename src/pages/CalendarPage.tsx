@@ -178,6 +178,20 @@ const MonthCard = ({ month, index }: { month: string; index: number }) => {
 };
 
 const CalendarPage = () => {
+  const [fyStart, setFyStart] = useState<number>(getFYStartMonth());
+
+  useEffect(() => {
+    const handler = () => setFyStart(getFYStartMonth());
+    window.addEventListener("fy-start-changed", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("fy-start-changed", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  const monthsData = buildMonths(fyStart);
+
   return (
     <div className="p-6 space-y-8">
       {/* Header + Legend */}
@@ -186,7 +200,8 @@ const CalendarPage = () => {
           Annual Audit Calendar
         </h1>
         <p className="text-gray-500 mt-1">
-          Controls scheduled for testing based on their audit frequency
+          Controls scheduled for testing based on their audit frequency.
+          Financial year starts in <span className="font-medium text-gray-900">{MONTH_NAMES[fyStart]}</span>.
         </p>
 
         {/* Soft Legend */}
