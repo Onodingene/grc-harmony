@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getFYStartMonth, setFYStartMonth, MONTH_NAMES } from "@/lib/financial-year";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -215,6 +216,21 @@ const SettingsPage = () => {
   const [deleteCountryOpen, setDeleteCountryOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
 
+  // Financial Year start month
+  const [fyMonth, setFyMonth] = useState<number>(getFYStartMonth());
+  useEffect(() => {
+    setFyMonth(getFYStartMonth());
+  }, []);
+  const handleFYChange = (m: string) => {
+    const n = parseInt(m, 10);
+    setFyMonth(n);
+    setFYStartMonth(n);
+    toast({
+      title: "Financial Year Updated",
+      description: `Audit calendar now starts in ${MONTH_NAMES[n]}`,
+    });
+  };
+
   // Team Handlers (unchanged)
   const handleInvite = () => {
     if (!inviteEmail || !inviteName) return;
@@ -363,6 +379,7 @@ const SettingsPage = () => {
           <TabsTrigger value="team">Team Members</TabsTrigger>
           <TabsTrigger value="controls">MCS Controls</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
+          <TabsTrigger value="financial-year">Financial Year</TabsTrigger>
         </TabsList>
 
         {/* ── Team Members Tab (unchanged) ── */}
@@ -651,6 +668,35 @@ const SettingsPage = () => {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+
+        {/* ── Financial Year Tab ── */}
+        <TabsContent value="financial-year" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Year Start</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 max-w-md">
+              <p className="text-sm text-muted-foreground">
+                Set the month your financial year begins. The annual audit calendar will follow this order.
+              </p>
+              <div>
+                <label className="text-sm font-medium">Start Month</label>
+                <Select value={String(fyMonth)} onValueChange={handleFYChange}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MONTH_NAMES.map((m, i) => (
+                      <SelectItem key={m} value={String(i)}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <span className="font-medium">Current FY:</span>{" "}
+                {MONTH_NAMES[fyMonth]} → {MONTH_NAMES[(fyMonth + 11) % 12]}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

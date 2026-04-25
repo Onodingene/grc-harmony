@@ -17,30 +17,44 @@ const teamEmails = [
   "farouk@company.com",
 ];
 
+const KEY_AREAS = [
+  "Fixed Asset",
+  "HR",
+  "Revenue",
+  "Governance & Compliance",
+  "Inventory",
+  "IT",
+  "Accounting and Reporting",
+  "Taxation",
+  "Treasury",
+  "Sustainability",
+  "Operations",
+] as const;
+
 interface Control {
   id: string;
-  domain: string;
+  keyArea: string;
   name: string;
   risk: string;
   frequency: string;
   owner: string;
   tester: string;
   activity: "Active" | "Inactive";
-  nature: "Manual" | "Automated" | "IT Dependent Manual";
+  nature: "Manual" | "Automated";
   type: "Preventive" | "Corrective" | "Detective";
   testDueDate: string;
 }
 
 const initialControls: Control[] = [
-  { id: "MCS01", domain: "Governance & Compliance", name: "Code of Business Conduct & Speak-up Culture", risk: "Corruption and Bribery, Money Laundering", frequency: "Monthly", owner: "john@company.com", tester: "farouk@company.com", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "2026-03-15" },
-  { id: "MCS02", domain: "Governance & Compliance", name: "Fair Competition Compliance", risk: "Infringement of Fair Competition regulations", frequency: "Annual", owner: "sarah@company.com", tester: "", activity: "Active", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
-  { id: "MCS03", domain: "Governance & Compliance", name: "Related Party Transactions & COI", risk: "Poor tone at the top", frequency: "Monthly", owner: "sarah@company.com", tester: "farouk@company.com", activity: "Active", nature: "IT Dependent Manual", type: "Preventive", testDueDate: "2026-03-15" },
-  { id: "MCS04", domain: "Governance & Compliance", name: "Board of Directors Secretarial Requirements", risk: "Lack of Board oversight", frequency: "Monthly", owner: "sarah@company.com", tester: "", activity: "Inactive", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
-  { id: "MCS05", domain: "Governance & Compliance", name: "Health, Safety & Environment", risk: "Health & Safety incidents", frequency: "Annual", owner: "john@company.com", tester: "", activity: "Active", nature: "Automated", type: "Corrective", testDueDate: "2026-06-30" },
+  { id: "MCS01", keyArea: "Governance & Compliance", name: "Code of Business Conduct & Speak-up Culture", risk: "Corruption and Bribery, Money Laundering", frequency: "Monthly", owner: "john@company.com", tester: "farouk@company.com", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "2026-03-15" },
+  { id: "MCS02", keyArea: "Governance & Compliance", name: "Fair Competition Compliance", risk: "Infringement of Fair Competition regulations", frequency: "Annual", owner: "sarah@company.com", tester: "", activity: "Active", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
+  { id: "MCS03", keyArea: "Governance & Compliance", name: "Related Party Transactions & COI", risk: "Poor tone at the top", frequency: "Monthly", owner: "sarah@company.com", tester: "farouk@company.com", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "2026-03-15" },
+  { id: "MCS04", keyArea: "Governance & Compliance", name: "Board of Directors Secretarial Requirements", risk: "Lack of Board oversight", frequency: "Monthly", owner: "sarah@company.com", tester: "", activity: "Inactive", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
+  { id: "MCS05", keyArea: "Governance & Compliance", name: "Health, Safety & Environment", risk: "Health & Safety incidents", frequency: "Annual", owner: "john@company.com", tester: "", activity: "Active", nature: "Automated", type: "Corrective", testDueDate: "2026-06-30" },
 ];
 
-const emptyForm: Omit<Control, ""> = {
-  id: "", domain: "", name: "", risk: "", frequency: "", owner: "", tester: "", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "",
+const emptyForm: Control = {
+  id: "", keyArea: "", name: "", risk: "", frequency: "", owner: "", tester: "", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "",
 };
 
 const Controls = () => {
@@ -49,11 +63,11 @@ const Controls = () => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [form, setForm] = useState<Control>(emptyForm as Control);
   const [search, setSearch] = useState("");
-  const [domainFilter, setDomainFilter] = useState("all");
+  const [keyAreaFilter, setKeyAreaFilter] = useState("all");
 
   const openAdd = () => {
     const nextId = `MCS${String(controls.length + 1).padStart(2, "0")}`;
-    setForm({ ...emptyForm as Control, id: nextId });
+    setForm({ ...emptyForm, id: nextId });
     setEditIndex(null);
     setOpen(true);
   };
@@ -78,8 +92,8 @@ const Controls = () => {
 
   const filtered = controls.filter((c) => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.id.toLowerCase().includes(search.toLowerCase());
-    const matchDomain = domainFilter === "all" || c.domain.toLowerCase().includes(domainFilter);
-    return matchSearch && matchDomain;
+    const matchKeyArea = keyAreaFilter === "all" || c.keyArea === keyAreaFilter;
+    return matchSearch && matchKeyArea;
   });
 
   return (
@@ -92,13 +106,11 @@ const Controls = () => {
       <div className="flex items-center justify-between gap-4">
         <Input placeholder="Search controls..." className="max-w-lg" value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="flex items-center gap-3">
-          <Select value={domainFilter} onValueChange={setDomainFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <Select value={keyAreaFilter} onValueChange={setKeyAreaFilter}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Domains</SelectItem>
-              <SelectItem value="governance">Governance & Compliance</SelectItem>
-              <SelectItem value="finance">Finance</SelectItem>
-              <SelectItem value="operations">Operations</SelectItem>
+              <SelectItem value="all">All Key Areas</SelectItem>
+              {KEY_AREAS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={() => exportToCSV(filtered, "controls")}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
@@ -112,7 +124,7 @@ const Controls = () => {
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
               <TableHead>Control Name</TableHead>
-              <TableHead>Domain</TableHead>
+              <TableHead>Key Area</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Tester</TableHead>
               <TableHead>Activity</TableHead>
@@ -130,7 +142,7 @@ const Controls = () => {
                 <TableRow key={c.id}>
                   <TableCell className="font-semibold">{c.id}</TableCell>
                   <TableCell>{c.name}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-xs">{c.domain}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className="text-xs">{c.keyArea}</Badge></TableCell>
                   <TableCell className="text-sm">{c.owner}</TableCell>
                   <TableCell className="text-sm">{c.tester || "-"}</TableCell>
                   <TableCell>
@@ -165,14 +177,11 @@ const Controls = () => {
                 <Input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Domain</Label>
-                <Select value={form.domain} onValueChange={(v) => setForm({ ...form, domain: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
+                <Label>Key Area</Label>
+                <Select value={form.keyArea} onValueChange={(v) => setForm({ ...form, keyArea: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select key area" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Governance & Compliance">Governance & Compliance</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                    <SelectItem value="IT & Security">IT & Security</SelectItem>
+                    {KEY_AREAS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -191,10 +200,10 @@ const Controls = () => {
               </div>
               <div className="grid gap-1.5">
                 <Label>Assign Tester (Email)</Label>
-                <Select value={form.tester} onValueChange={(v) => setForm({ ...form, tester: v })}>
+                <Select value={form.tester || "unassigned"} onValueChange={(v) => setForm({ ...form, tester: v === "unassigned" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select tester" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {teamEmails.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -213,12 +222,11 @@ const Controls = () => {
               </div>
               <div className="grid gap-1.5">
                 <Label>Control Nature</Label>
-                <Select value={form.nature} onValueChange={(v: "Manual" | "Automated" | "IT Dependent Manual") => setForm({ ...form, nature: v })}>
+                <Select value={form.nature} onValueChange={(v: "Manual" | "Automated") => setForm({ ...form, nature: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Manual">Manual</SelectItem>
                     <SelectItem value="Automated">Automated</SelectItem>
-                    <SelectItem value="IT Dependent Manual">IT Dependent Manual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
