@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,78 +7,133 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
-import { exportToCSV } from "@/lib/csv-export";
-
-const teamEmails = [
-  "john@company.com",
-  "sarah@company.com",
-  "mike@company.com",
-  "alice@company.com",
-  "farouk@company.com",
-];
+import { apiFetch } from "@/lib/api";
+import { useCountryStore } from "@/lib/countryStore";
+import { useToast } from "@/hooks/use-toast";
 
 interface Control {
   id: string;
-  domain: string;
+  controlId: string;
   name: string;
+  domain: string;
   risk: string;
   frequency: string;
-  owner: string;
-  tester: string;
-  activity: "Active" | "Inactive";
-  nature: "Manual" | "Automated" | "IT Dependent Manual";
-  type: "Preventive" | "Corrective" | "Detective";
-  testDueDate: string;
+  status: "active" | "inactive";
+  nature: string;
+  type: string;
+  testDueDay: number;
+  countryId: string;
+  ownerId: string | null;
+  testerId: string | null;
+  owner?: { id: string; fullName: string; email: string };
+  tester?: { id: string; fullName: string; email: string };
 }
 
-const initialControls: Control[] = [
-  { id: "MCS01", domain: "Governance & Compliance", name: "Code of Business Conduct & Speak-up Culture", risk: "Corruption and Bribery, Money Laundering", frequency: "Monthly", owner: "john@company.com", tester: "farouk@company.com", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "2026-03-15" },
-  { id: "MCS02", domain: "Governance & Compliance", name: "Fair Competition Compliance", risk: "Infringement of Fair Competition regulations", frequency: "Annual", owner: "sarah@company.com", tester: "", activity: "Active", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
-  { id: "MCS03", domain: "Governance & Compliance", name: "Related Party Transactions & COI", risk: "Poor tone at the top", frequency: "Monthly", owner: "sarah@company.com", tester: "farouk@company.com", activity: "Active", nature: "IT Dependent Manual", type: "Preventive", testDueDate: "2026-03-15" },
-  { id: "MCS04", domain: "Governance & Compliance", name: "Board of Directors Secretarial Requirements", risk: "Lack of Board oversight", frequency: "Monthly", owner: "sarah@company.com", tester: "", activity: "Inactive", nature: "Manual", type: "Detective", testDueDate: "2026-03-15" },
-  { id: "MCS05", domain: "Governance & Compliance", name: "Health, Safety & Environment", risk: "Health & Safety incidents", frequency: "Annual", owner: "john@company.com", tester: "", activity: "Active", nature: "Automated", type: "Corrective", testDueDate: "2026-06-30" },
-];
+interface CompanyMember {
+  id: string;
+  fullName: string;
+  email: string;
+}
 
-const emptyForm: Omit<Control, ""> = {
-  id: "", domain: "", name: "", risk: "", frequency: "", owner: "", tester: "", activity: "Active", nature: "Manual", type: "Preventive", testDueDate: "",
+const emptyForm = {
+  controlId: "", name: "", domain: "", risk: "",
+  frequency: "monthly", nature: "manual", type: "preventive",
+  status: "active" as "active" | "inactive",
+  testDueDay: 15, countryId: "",
+  ownerId: "", testerId: "",
 };
 
 const Controls = () => {
-  const [controls, setControls] = useState<Control[]>(initialControls);
+  const { toast } = useToast();
+  const { countries, selectedCountry } = useCountryStore();
+  const [controls, setControls] = useState<Control[]>([]);
+  const [members, setMembers] = useState<CompanyMember[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [form, setForm] = useState<Control>(emptyForm as Control);
+  const [editingControl, setEditingControl] = useState<Control | null>(null);
+  const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [domainFilter, setDomainFilter] = useState("all");
 
+  useEffect(() => {
+    apiFetch<CompanyMember[]>("/company/members").then((r) => {
+      if (r.data) setMembers(r.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    apiFetch<Control[]>("/settings/controls").then((r) => {
+      if (r.data) setControls(r.data);
+    }).finally(() => setLoading(false));
+  }, []);
+
   const openAdd = () => {
-    const nextId = `MCS${String(controls.length + 1).padStart(2, "0")}`;
-    setForm({ ...emptyForm as Control, id: nextId });
-    setEditIndex(null);
+    setForm({ ...emptyForm, countryId: selectedCountry?.id ?? "" });
+    setEditingControl(null);
     setOpen(true);
   };
 
-  const openEdit = (i: number) => {
-    setForm({ ...controls[i] });
-    setEditIndex(i);
+  const openEdit = (c: Control) => {
+    setForm({
+      controlId: c.controlId, name: c.name, domain: c.domain, risk: c.risk,
+      frequency: c.frequency, nature: c.nature, type: c.type,
+      status: c.status, testDueDay: c.testDueDay, countryId: c.countryId,
+      ownerId: c.ownerId ?? "", testerId: c.testerId ?? "",
+    });
+    setEditingControl(c);
     setOpen(true);
   };
 
-  const save = () => {
-    if (!form.name || !form.id) return;
-    if (editIndex !== null) {
-      setControls((prev) => prev.map((c, i) => (i === editIndex ? { ...form } : c)));
+  const save = async () => {
+    if (!form.name || !form.controlId) return;
+    const body = {
+      ...form,
+      ownerId: form.ownerId || undefined,
+      testerId: form.testerId || undefined,
+    };
+
+    if (editingControl) {
+      const res = await apiFetch<Control>(`/settings/controls/${editingControl.id}`, {
+        method: "PUT", body: JSON.stringify(body),
+      });
+      if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
+      if (res.data) setControls((prev) => prev.map((c) => c.id === editingControl.id ? res.data! : c));
+      toast({ title: "Control updated" });
     } else {
-      setControls((prev) => [...prev, { ...form }]);
+      const res = await apiFetch<Control>("/settings/controls", {
+        method: "POST", body: JSON.stringify(body),
+      });
+      if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
+      if (res.data) setControls((prev) => [...prev, res.data!]);
+      toast({ title: "Control added" });
     }
     setOpen(false);
   };
 
-  const remove = (i: number) => setControls((prev) => prev.filter((_, idx) => idx !== i));
+  const remove = async (c: Control) => {
+    const res = await apiFetch(`/settings/controls/${c.id}`, { method: "DELETE" });
+    if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
+    setControls((prev) => prev.filter((x) => x.id !== c.id));
+    toast({ title: "Control deleted" });
+  };
+
+  const exportCSV = () => {
+    const rows = filtered.map((c) => ({
+      "Control ID": c.controlId, "Name": c.name, "Domain": c.domain,
+      "Risk": c.risk, "Frequency": c.frequency, "Status": c.status,
+      "Owner": c.owner?.email ?? "", "Tester": c.tester?.email ?? "",
+    }));
+    const csv = [Object.keys(rows[0]).join(","), ...rows.map((r) => Object.values(r).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "controls.csv";
+    a.click();
+  };
 
   const filtered = controls.filter((c) => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.id.toLowerCase().includes(search.toLowerCase());
-    const matchDomain = domainFilter === "all" || c.domain.toLowerCase().includes(domainFilter);
+    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.controlId.toLowerCase().includes(search.toLowerCase());
+    const matchDomain = domainFilter === "all" || c.domain.toLowerCase().includes(domainFilter.toLowerCase());
     return matchSearch && matchDomain;
   });
 
@@ -89,19 +144,20 @@ const Controls = () => {
         <p className="text-muted-foreground text-sm">Manage MCS Controls — Add, edit, or remove Minimum Control Standards</p>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <Input placeholder="Search controls..." className="max-w-lg" value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="flex items-center gap-3">
           <Select value={domainFilter} onValueChange={setDomainFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Domains</SelectItem>
               <SelectItem value="governance">Governance & Compliance</SelectItem>
-              <SelectItem value="finance">Finance</SelectItem>
-              <SelectItem value="operations">Operations</SelectItem>
+              <SelectItem value="finance">Finance & Reporting</SelectItem>
+              <SelectItem value="procurement">Procurement & AP</SelectItem>
+              <SelectItem value="inventory">Inventory</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => exportToCSV(filtered, "controls")}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
+          <Button variant="outline" onClick={exportCSV}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
           <Button onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Add New Control</Button>
         </div>
       </div>
@@ -115,121 +171,108 @@ const Controls = () => {
               <TableHead>Domain</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Tester</TableHead>
-              <TableHead>Activity</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Nature</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Test Due Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((c) => {
-              const idx = controls.indexOf(c);
-              return (
-                <TableRow key={c.id}>
-                  <TableCell className="font-semibold">{c.id}</TableCell>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-xs">{c.domain}</Badge></TableCell>
-                  <TableCell className="text-sm">{c.owner}</TableCell>
-                  <TableCell className="text-sm">{c.tester || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={c.activity === "Active" ? "bg-green-100 text-green-800 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
-                      {c.activity}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">{c.nature}</TableCell>
-                  <TableCell className="text-sm">{c.type}</TableCell>
-                  <TableCell>{c.frequency}</TableCell>
-                  <TableCell>{c.testDueDate}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(idx)}><Pencil className="w-3 h-3 mr-1" /> Edit</Button>
-                      <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => remove(idx)}><Trash2 className="w-3 h-3 mr-1" /> Delete</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {loading ? (
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No controls found</TableCell></TableRow>
+            ) : filtered.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="font-semibold">{c.controlId}</TableCell>
+                <TableCell>{c.name}</TableCell>
+                <TableCell><Badge variant="secondary" className="text-xs">{c.domain}</Badge></TableCell>
+                <TableCell className="text-sm">{c.owner?.email ?? "—"}</TableCell>
+                <TableCell className="text-sm">{c.tester?.email ?? "—"}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={c.status === "active" ? "bg-green-100 text-green-800 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
+                    {c.status === "active" ? "Active" : "Inactive"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm capitalize">{c.nature.replace(/_/g, " ")}</TableCell>
+                <TableCell className="text-sm capitalize">{c.type}</TableCell>
+                <TableCell className="capitalize">{c.frequency}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(c)}><Pencil className="w-3 h-3 mr-1" /> Edit</Button>
+                    <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => remove(c)}><Trash2 className="w-3 h-3 mr-1" /> Delete</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editIndex !== null ? "Edit Control" : "Add New Control"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingControl ? "Edit Control" : "Add New Control"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
                 <Label>Control ID</Label>
-                <Input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} />
+                <Input value={form.controlId} onChange={(e) => setForm({ ...form, controlId: e.target.value })} disabled={!!editingControl} />
               </div>
               <div className="grid gap-1.5">
                 <Label>Domain</Label>
-                <Select value={form.domain} onValueChange={(v) => setForm({ ...form, domain: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Governance & Compliance">Governance & Compliance</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                    <SelectItem value="IT & Security">IT & Security</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} placeholder="e.g. Finance & Reporting" />
               </div>
             </div>
             <div className="grid gap-1.5"><Label>Control Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div className="grid gap-1.5"><Label>Risk</Label><Input value={form.risk} onChange={(e) => setForm({ ...form, risk: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
-                <Label>Owner (Email)</Label>
-                <Select value={form.owner} onValueChange={(v) => setForm({ ...form, owner: v })}>
+                <Label>Owner</Label>
+                <Select value={form.ownerId} onValueChange={(v) => setForm({ ...form, ownerId: v })}>
                   <SelectTrigger><SelectValue placeholder="Select owner" /></SelectTrigger>
-                  <SelectContent>
-                    {teamEmails.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{members.map((m) => <SelectItem key={m.id} value={m.id}>{m.fullName} — {m.email}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Assign Tester (Email)</Label>
-                <Select value={form.tester || "unassigned"} onValueChange={(v) => setForm({ ...form, tester: v === "unassigned" ? "" : v })}>
+                <Label>Tester</Label>
+                <Select value={form.testerId || "unassigned"} onValueChange={(v) => setForm({ ...form, testerId: v === "unassigned" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select tester" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {teamEmails.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.fullName} — {m.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-1.5">
-                <Label>Activity</Label>
-                <Select value={form.activity} onValueChange={(v: "Active" | "Inactive") => setForm({ ...form, activity: v })}>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v: "active" | "inactive") => setForm({ ...form, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Control Nature</Label>
-                <Select value={form.nature} onValueChange={(v: "Manual" | "Automated" | "IT Dependent Manual") => setForm({ ...form, nature: v })}>
+                <Label>Nature</Label>
+                <Select value={form.nature} onValueChange={(v) => setForm({ ...form, nature: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Manual">Manual</SelectItem>
-                    <SelectItem value="Automated">Automated</SelectItem>
-                    <SelectItem value="IT Dependent Manual">IT Dependent Manual</SelectItem>
+                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="it_dependent_manual">IT Dependent Manual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Control Type</Label>
-                <Select value={form.type} onValueChange={(v: "Preventive" | "Corrective" | "Detective") => setForm({ ...form, type: v })}>
+                <Label>Type</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Preventive">Preventive</SelectItem>
-                    <SelectItem value="Corrective">Corrective</SelectItem>
-                    <SelectItem value="Detective">Detective</SelectItem>
+                    <SelectItem value="preventive">Preventive</SelectItem>
+                    <SelectItem value="detective">Detective</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -238,21 +281,26 @@ const Controls = () => {
               <div className="grid gap-1.5">
                 <Label>Frequency</Label>
                 <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Monthly">Monthly</SelectItem>
-                    <SelectItem value="Quarterly">Quarterly</SelectItem>
-                    <SelectItem value="Annual">Annual</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="semi_annually">Semi-annually</SelectItem>
+                    <SelectItem value="annual">Annual</SelectItem>
+                    <SelectItem value="as_needed">As needed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Test Due Date</Label>
-                <Input type="date" value={form.testDueDate} onChange={(e) => setForm({ ...form, testDueDate: e.target.value })} />
+                <Label>Country</Label>
+                <Select value={form.countryId} onValueChange={(v) => setForm({ ...form, countryId: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                  <SelectContent>{countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
             </div>
           </div>
-          <DialogFooter><Button onClick={save}>{editIndex !== null ? "Update" : "Add"} Control</Button></DialogFooter>
+          <DialogFooter><Button onClick={save}>{editingControl ? "Update" : "Add"} Control</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

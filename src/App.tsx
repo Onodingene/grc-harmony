@@ -1,8 +1,12 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuthStore } from "@/lib/authStore";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -25,8 +29,77 @@ import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import { Navigate } from 'react-router-dom';
 
 const queryClient = new QueryClient();
+
+const AppRoutes = () => {
+  const { setReady } = useAuthStore();
+
+  useEffect(() => {
+    // Just mark the app as ready immediately — no refresh call on mount.
+    // The token lives in memory. If the user has no session they go to /login.
+    // The refresh call in apiFetch handles expired tokens mid-session automatically.
+    setReady();
+  }, []);
+
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/demo" element={<Demo />} />
+      
+
+      <Route element={<AppLayout />}>
+        <Route path="/dashboard" element={
+          <ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="/consolidated" element={
+          <ProtectedRoute path="/consolidated"><Consolidated /></ProtectedRoute>
+        } />
+        <Route path="/controls" element={
+          <ProtectedRoute path="/controls"><Controls /></ProtectedRoute>
+        } />
+        <Route path="/test-plan" element={
+          <ProtectedRoute path="/test-plan"><TestPlan /></ProtectedRoute>
+        } />
+        <Route path="/testing" element={
+          <ProtectedRoute path="/testing"><Testing /></ProtectedRoute>
+        } />
+        <Route path="/monthly-report" element={
+          <ProtectedRoute path="/monthly-report"><MonthlyReport /></ProtectedRoute>
+        } />
+        <Route path="/issues" element={
+          <ProtectedRoute path="/issues"><Issues /></ProtectedRoute>
+        } />
+        <Route path="/actions" element={
+          <ProtectedRoute path="/actions"><Actions /></ProtectedRoute>
+        } />
+        <Route path="/audit" element={
+          <ProtectedRoute path="/audit"><Audit /></ProtectedRoute>
+        } />
+        <Route path="/calendar" element={
+          <ProtectedRoute path="/calendar"><CalendarPage /></ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute path="/settings"><SettingsPage /></ProtectedRoute>
+        } />
+        <Route path="/billing" element={
+          <ProtectedRoute path="/billing"><Billing /></ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute path="/profile"><Profile /></ProtectedRoute>
+        } />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,31 +107,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/demo" element={<Demo />} />
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/consolidated" element={<Consolidated />} />
-            <Route path="/controls" element={<Controls />} />
-            <Route path="/test-plan" element={<TestPlan />} />
-            <Route path="/testing" element={<Testing />} />
-            <Route path="/monthly-report" element={<MonthlyReport />} />
-            <Route path="/issues" element={<Issues />} />
-            <Route path="/actions" element={<Actions />} />
-            <Route path="/audit" element={<Audit />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/profile" element={<Profile />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

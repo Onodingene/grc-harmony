@@ -1,133 +1,100 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Download } from "lucide-react";
-import { exportToCSV } from "@/lib/csv-export";
+import { apiFetch } from "@/lib/api";
+import { useCountryStore } from "@/lib/countryStore";
 
-// Simulated current user email
-const CURRENT_USER = "farouk@company.com";
-
-interface TestRow {
+interface TestPlanRow {
   id: string;
+  controlId: string;
   name: string;
-  owner: string;
+  domain: string;
+  frequency: string;
+  nature: string;
+  type: string;
+  owner: { id: string; fullName: string; email: string };
+  assignedTester: { id: string; fullName: string; email: string } | null;
   dueDate: string;
-  assignedTester: string;
-  status: "Pending" | "Pass" | "Fail" | "Exception";
-  population: number;
-  sampleSize: number;
-  exceptions: number;
-}
-
-const testPlanData: TestRow[] = [
-  { id: "MCS01", name: "Code of Business Conduct & Speak-up Culture", owner: "john@company.com", dueDate: "2026-03-15", assignedTester: "farouk@company.com", status: "Pending", population: 0, sampleSize: 0, exceptions: 0 },
-  { id: "MCS03", name: "Related Party Transactions & COI", owner: "sarah@company.com", dueDate: "2026-03-15", assignedTester: "farouk@company.com", status: "Pass", population: 25, sampleSize: 25, exceptions: 2 },
-  { id: "MCS04", name: "Board of Directors Secretarial Requirements", owner: "sarah@company.com", dueDate: "2026-03-15", assignedTester: "", status: "Pending", population: 0, sampleSize: 0, exceptions: 0 },
-  { id: "MCS11", name: "Personal Data Protection (GDPR)", owner: "alice@company.com", dueDate: "2026-04-15", assignedTester: "", status: "Pending", population: 0, sampleSize: 0, exceptions: 0 },
-  { id: "MCS14", name: "Litigation Disputes", owner: "sarah@company.com", dueDate: "2026-04-15", assignedTester: "farouk@company.com", status: "Pending", population: 0, sampleSize: 0, exceptions: 0 },
-  { id: "MCS20", name: "Customer & Inventory Master Data Management", owner: "mike@company.com", dueDate: "2026-03-15", assignedTester: "", status: "Pending", population: 0, sampleSize: 0, exceptions: 0 },
-  { id: "MCS32", name: "Payment Processing", owner: "mike@company.com", dueDate: "2026-03-15", assignedTester: "farouk@company.com", status: "Fail", population: 20, sampleSize: 20, exceptions: 8 },
-  { id: "MCS34", name: "Physical Stock Count, Reconciliation & Valuation", owner: "mike@company.com", dueDate: "2026-05-15", assignedTester: "farouk@company.com", status: "Exception", population: 30, sampleSize: 25, exceptions: 5 },
-  { id: "MCS43", name: "Bank Account Reconciliations", owner: "mike@company.com", dueDate: "2026-05-15", assignedTester: "farouk@company.com", status: "Exception", population: 15, sampleSize: 15, exceptions: 4 },
-];
-
-const months = [
-  { value: "all", label: "All Months" },
-  { value: "2026-01", label: "January 2026" },
-  { value: "2026-02", label: "February 2026" },
-  { value: "2026-03", label: "March 2026" },
-  { value: "2026-04", label: "April 2026" },
-  { value: "2026-05", label: "May 2026" },
-  { value: "2026-06", label: "June 2026" },
-];
-
-function calculateResult(population: number, sampleSize: number, exceptions: number): { result: string; percentage: number } {
-  if (sampleSize === 0 || population === 0) return { result: "N/A", percentage: 0 };
-  const passRate = ((sampleSize - exceptions) / sampleSize) * 100;
-  return {
-    result: passRate >= 80 ? "Pass" : "Fail",
-    percentage: Math.round(passRate),
-  };
+  status: "pending" | "pass" | "exception" | "fail";
+  testResult: {
+    population: number;
+    sampleSize: number;
+    exceptions: number;
+    result: string;
+    testedAt: string;
+  } | null;
 }
 
 const statusColor = (s: string) => {
   switch (s) {
-    case "Pass": return "bg-green-100 text-green-800 border-green-300";
-    case "Fail": return "bg-red-100 text-red-800 border-red-300";
-    case "Exception": return "bg-orange-100 text-orange-800 border-orange-300";
-    case "N/A": return "bg-gray-100 text-gray-600 border-gray-300";
+    case "pass": return "bg-green-100 text-green-800 border-green-300";
+    case "fail": return "bg-red-100 text-red-800 border-red-300";
+    case "exception": return "bg-orange-100 text-orange-800 border-orange-300";
     default: return "bg-yellow-100 text-yellow-800 border-yellow-300";
   }
 };
 
 const TestPlan = () => {
-  const [data, setData] = useState<TestRow[]>(testPlanData);
-  const [monthFilter, setMonthFilter] = useState("all");
-  const [testDialog, setTestDialog] = useState(false);
-  const [testingRow, setTestingRow] = useState<number | null>(null);
-  const [testForm, setTestForm] = useState({ population: 0, sampleSize: 0, exceptions: 0 });
+  const { selectedCountry } = useCountryStore();
+  const [data, setData] = useState<TestPlanRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [monthFilter, setMonthFilter] = useState(new Date().toISOString().slice(0, 7));
 
-  const filtered = useMemo(() => {
-    return data.filter((row) => {
-      if (monthFilter === "all") return true;
-      return row.dueDate.startsWith(monthFilter);
-    });
-  }, [data, monthFilter]);
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const val = d.toISOString().slice(0, 7);
+    return { value: val, label: d.toLocaleDateString("en-GB", { month: "long", year: "numeric" }) };
+  });
 
-  const completed = filtered.filter(d => {
-    const { result } = calculateResult(d.population, d.sampleSize, d.exceptions);
-    return result === "Pass";
-  }).length;
-  const tested = filtered.filter(d => d.sampleSize > 0).length;
-  const progress = filtered.length > 0 ? Math.round((tested / filtered.length) * 100) : 0;
+  useEffect(() => {
+    if (!selectedCountry) return;
+    setLoading(true);
+    apiFetch<TestPlanRow[]>(`/test-plan?country_id=${selectedCountry.id}&month=${monthFilter}`)
+      .then((res) => { if (res.data) setData(res.data); })
+      .finally(() => setLoading(false));
+  }, [selectedCountry, monthFilter]);
 
-  const openTest = (idx: number) => {
-    const row = data[idx];
-    setTestForm({ population: row.population, sampleSize: row.sampleSize, exceptions: row.exceptions });
-    setTestingRow(idx);
-    setTestDialog(true);
-  };
+  const tested = data.filter((r) => r.status !== "pending").length;
+  const passed = data.filter((r) => r.status === "pass").length;
+  const progress = data.length > 0 ? Math.round((tested / data.length) * 100) : 0;
 
-  const saveTest = () => {
-    if (testingRow === null) return;
-    const { result } = calculateResult(testForm.population, testForm.sampleSize, testForm.exceptions);
-    setData(prev => prev.map((r, i) => i === testingRow ? {
-      ...r,
-      population: testForm.population,
-      sampleSize: testForm.sampleSize,
-      exceptions: testForm.exceptions,
-      status: result === "N/A" ? "Pending" : result as "Pass" | "Fail",
-    } : r));
-    setTestDialog(false);
+  const exportCSV = () => {
+    const rows = data.map((r) => ({
+      "Control ID": r.controlId, "Name": r.name, "Domain": r.domain,
+      "Owner": r.owner?.email ?? "", "Tester": r.assignedTester?.email ?? "",
+      "Due Date": r.dueDate, "Status": r.status,
+    }));
+    const csv = [Object.keys(rows[0]).join(","), ...rows.map((r) => Object.values(r).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "test-plan.csv";
+    a.click();
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Monthly Test Plan — Consolidated</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-xl font-bold">Monthly Test Plan — {selectedCountry?.name ?? "All Countries"}</h1>
         <div className="flex items-center gap-3">
           <Select value={monthFilter} onValueChange={setMonthFilter}>
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-            </SelectContent>
+            <SelectContent>{months.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={() => exportToCSV(filtered, "test-plan")}>
+          <Button size="sm" variant="outline" onClick={exportCSV}>
             <Download className="h-4 w-4 mr-1" /> Export CSV
           </Button>
         </div>
       </div>
 
       <div>
-        <p className="text-sm font-semibold mb-1">Testing Progress: {tested}/{filtered.length} tested ({completed} passed)</p>
+        <p className="text-sm font-semibold mb-1">Testing Progress: {tested}/{data.length} tested ({passed} passed)</p>
         <div className="flex items-center gap-3 max-w-xs">
-          <Progress value={progress} className="h-4 flex-1 [&>div]:bg-primary" />
+          <Progress value={progress} className="h-4 flex-1" />
           <span className="text-sm font-semibold">{progress}%</span>
         </div>
       </div>
@@ -136,87 +103,37 @@ const TestPlan = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-primary text-primary-foreground">
-              <TableHead className="text-primary-foreground font-bold">Control ID</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Control Name</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Owner</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Due Date</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Assigned Tester</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Population</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Sample</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Exceptions</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Result</TableHead>
-              <TableHead className="text-primary-foreground font-bold">Actions</TableHead>
+              {["Control ID", "Control Name", "Domain", "Owner", "Assigned Tester", "Due Date", "Population", "Sample", "Exceptions", "Status"].map((h) => (
+                <TableHead key={h} className="text-primary-foreground font-bold whitespace-nowrap">{h}</TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((row) => {
-              const globalIdx = data.indexOf(row);
-              const { result, percentage } = calculateResult(row.population, row.sampleSize, row.exceptions);
-              const isAssignedToMe = row.assignedTester === CURRENT_USER;
-              return (
-                <TableRow key={row.id} className="hover:bg-muted/50">
-                  <TableCell className="font-bold text-primary">{row.id}</TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.owner}</TableCell>
-                  <TableCell>{row.dueDate}</TableCell>
-                  <TableCell>{row.assignedTester || "-"}</TableCell>
-                  <TableCell>{row.population || "-"}</TableCell>
-                  <TableCell>{row.sampleSize || "-"}</TableCell>
-                  <TableCell>{row.exceptions || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={statusColor(result)}>
-                      {result === "N/A" ? "Pending" : `${result} (${percentage}%)`}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {isAssignedToMe ? (
-                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-7 text-xs px-3" onClick={() => openTest(globalIdx)}>
-                        Test
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {loading ? (
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading test plan...</TableCell></TableRow>
+            ) : data.length === 0 ? (
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No controls due this month.</TableCell></TableRow>
+            ) : data.map((row) => (
+              <TableRow key={row.id} className="hover:bg-muted/50">
+                <TableCell className="font-bold text-primary">{row.controlId}</TableCell>
+                <TableCell>{row.name}</TableCell>
+                <TableCell>{row.domain}</TableCell>
+                <TableCell className="text-sm">{row.owner?.email ?? "—"}</TableCell>
+                <TableCell className="text-sm">{row.assignedTester?.email ?? "—"}</TableCell>
+                <TableCell>{row.dueDate}</TableCell>
+                <TableCell>{row.testResult?.population ?? "—"}</TableCell>
+                <TableCell>{row.testResult?.sampleSize ?? "—"}</TableCell>
+                <TableCell>{row.testResult?.exceptions ?? "—"}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={statusColor(row.status)}>
+                    {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
-
-      <Dialog open={testDialog} onOpenChange={setTestDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Record Test Result — {testingRow !== null ? data[testingRow].id : ""}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5">
-              <Label>Population Size</Label>
-              <Input type="number" min={0} value={testForm.population} onChange={(e) => setTestForm({ ...testForm, population: Number(e.target.value) })} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Sample Size</Label>
-              <Input type="number" min={0} value={testForm.sampleSize} onChange={(e) => setTestForm({ ...testForm, sampleSize: Number(e.target.value) })} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Exceptions Found</Label>
-              <Input type="number" min={0} value={testForm.exceptions} onChange={(e) => setTestForm({ ...testForm, exceptions: Number(e.target.value) })} />
-            </div>
-            {testForm.sampleSize > 0 && (
-              <div className="p-3 rounded-md bg-muted">
-                <p className="text-sm font-medium">
-                  Calculated Result: {(() => {
-                    const { result, percentage } = calculateResult(testForm.population, testForm.sampleSize, testForm.exceptions);
-                    return <Badge variant="outline" className={statusColor(result)}>{result} ({percentage}%)</Badge>;
-                  })()}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">≥80% pass rate = Pass, &lt;80% = Fail</p>
-              </div>
-            )}
-          </div>
-          <DialogFooter><Button onClick={saveTest}>Save Result</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
