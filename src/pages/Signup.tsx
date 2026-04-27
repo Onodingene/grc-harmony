@@ -19,6 +19,7 @@ const Signup = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,29 @@ const Signup = () => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    // Persist the org name so we can attach it after Google redirect completes
+    if (form.org) {
+      try {
+        localStorage.setItem("pending_org", form.org);
+      } catch {
+        // ignore storage errors
+      }
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    if (error) {
+      setError(error.message);
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-lg">
@@ -63,6 +87,29 @@ const Signup = () => {
           <p className="text-muted-foreground text-sm mt-1">Create your account</p>
         </CardHeader>
         <CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleGoogleSignUp}
+            disabled={googleLoading}
+          >
+            <GoogleIcon />
+            {googleLoading ? "Redirecting..." : "Sign up with Google"}
+          </Button>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Tip: enter your organization name below before continuing with Google so we can attach it to your account.
+          </p>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or sign up with email</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>

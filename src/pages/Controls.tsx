@@ -11,6 +11,20 @@ import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
 
+const KEY_AREAS = [
+  "Fixed Asset",
+  "HR",
+  "Revenue",
+  "Governance & Compliance",
+  "Inventory",
+  "IT",
+  "Accounting and Reporting",
+  "Taxation",
+  "Treasury",
+  "Sustainability",
+  "Operations",
+] as const;
+
 interface Control {
   id: string;
   controlId: string;
@@ -53,7 +67,7 @@ const Controls = () => {
   const [editingControl, setEditingControl] = useState<Control | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
-  const [domainFilter, setDomainFilter] = useState("all");
+  const [keyAreaFilter, setKeyAreaFilter] = useState("all");
 
   useEffect(() => {
     apiFetch<CompanyMember[]>("/company/members").then((r) => {
@@ -168,7 +182,7 @@ const Controls = () => {
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
               <TableHead>Control Name</TableHead>
-              <TableHead>Domain</TableHead>
+              <TableHead>Key Area</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Tester</TableHead>
               <TableHead>Status</TableHead>
