@@ -1,16 +1,19 @@
-// src/lib/api.ts
-
-let accessToken: string | null = null;
+let accessToken: string | null = localStorage.getItem("accessToken");
 
 export function setAccessToken(token: string) {
   accessToken = token;
+  localStorage.setItem("accessToken", token);
 }
 
 export function clearAccessToken() {
   accessToken = null;
+  localStorage.removeItem("accessToken");
 }
 
 export function getAccessToken() {
+  if (!accessToken) {
+    accessToken = localStorage.getItem("accessToken");
+  }
   return accessToken;
 }
 
@@ -29,39 +32,50 @@ export async function apiFetch<T = unknown>(
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(options.headers as Record<string, string>),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(getAccessToken()
+        ? { Authorization: `Bearer ${getAccessToken()}` }
+        : {}),
     },
   });
 
-  // Token expired — try silent refresh
-  if (response.status === 401) {
+  const isAuthRoute =
+    path.includes("/auth/login") ||
+    path.includes("/auth/refresh") ||
+    path.includes("/auth/register");
+
+  if (response.status === 401 && !isAuthRoute) {
     const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
+      method: "POST",
+      credentials: "include",
     });
 
     if (refreshRes.ok) {
-      const refreshData = await refreshRes.json() as ApiResponse<{ accessToken: string }>;
-      accessToken = refreshData.data?.accessToken ?? null;
-
+      const refreshData = (await refreshRes.json()) as ApiResponse<{
+        accessToken: string;
+      }>;
+      if (refreshData.data?.accessToken) {
+        setAccessToken(refreshData.data.accessToken);
+      }
       // Retry original request with new token
       return fetch(`${BASE_URL}${path}`, {
         ...options,
-        credentials: 'include',
+        credentials: "include",
         headers: {
-          ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+          ...(!isFormData ? { "Content-Type": "application/json" } : {}),
           ...(options.headers as Record<string, string>),
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          ...(getAccessToken()
+            ? { Authorization: `Bearer ${getAccessToken()}` }
+            : {}),
         },
-      }).then(r => r.json() as Promise<ApiResponse<T>>);
+      }).then((r) => r.json() as Promise<ApiResponse<T>>);
     } else {
       accessToken = null;
-      window.location.href = '/login';
-      return { data: null, error: 'Session expired' };
+      window.location.href = "/login";
+      return { data: null, error: "Session expired" };
     }
   }
 

@@ -31,19 +31,19 @@ interface CalendarData {
 
 // API returns lowercase: "monthly", "quarterly", "semi_annually", "annual", "as_needed"
 const frequencyColors: Record<string, string> = {
-  monthly:       "bg-blue-50 text-blue-700 border-blue-100",
-  quarterly:     "bg-violet-50 text-violet-700 border-violet-100",
+  monthly: "bg-blue-50 text-blue-700 border-blue-100",
+  quarterly: "bg-violet-50 text-violet-700 border-violet-100",
   semi_annually: "bg-amber-50 text-amber-700 border-amber-100",
-  annual:        "bg-emerald-50 text-emerald-700 border-emerald-100",
-  as_needed:     "bg-gray-50 text-gray-600 border-gray-100",
+  annual: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  as_needed: "bg-gray-50 text-gray-600 border-gray-100",
 };
 
 const frequencyLabel: Record<string, string> = {
-  monthly:       "Monthly",
-  quarterly:     "Quarterly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
   semi_annually: "Semi-Annually",
-  annual:        "Annual",
-  as_needed:     "As Needed",
+  annual: "Annual",
+  as_needed: "As Needed",
 };
 
 const VISIBLE = 5;
@@ -65,9 +65,12 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <div className="font-semibold text-lg text-gray-900">{data.month}</div>
+          <div className="font-semibold text-lg text-gray-900">
+            {data.month}
+          </div>
           <div className="text-sm text-gray-500 mt-1">
-            {controls.length} control{controls.length !== 1 ? "s" : ""} scheduled
+            {controls.length} control{controls.length !== 1 ? "s" : ""}{" "}
+            scheduled
           </div>
         </div>
         <div className="text-xs font-mono px-3 py-1 bg-gray-100 rounded-full text-gray-600">
@@ -82,11 +85,14 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
               <div
                 key={ctrl.controlId}
                 className={`text-sm px-4 py-3 rounded-xl border flex justify-between items-center ${
-                  frequencyColors[ctrl.frequency] ?? "bg-gray-50 text-gray-600 border-gray-100"
+                  frequencyColors[ctrl.frequency] ??
+                  "bg-gray-50 text-gray-600 border-gray-100"
                 }`}
               >
                 <span className="font-medium">{ctrl.controlId}</span>
-                <span className="text-xs opacity-75 truncate max-w-[130px]">{ctrl.name}</span>
+                <span className="text-xs opacity-75 truncate max-w-[130px]">
+                  {ctrl.name}
+                </span>
               </div>
             ))
           ) : (
@@ -98,7 +104,10 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
 
         {/* Scroll controls */}
         {controls.length > VISIBLE && (
-          <div className="flex flex-col items-center pt-1" style={{ width: 20 }}>
+          <div
+            className="flex flex-col items-center pt-1"
+            style={{ width: 20 }}
+          >
             <button
               onClick={() => setScrollIndex((i) => Math.max(0, i - 1))}
               disabled={scrollIndex === 0}
@@ -140,23 +149,29 @@ const CalendarPage = () => {
   const [year, setYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    if (!selectedCountry?.id) return;
     setLoading(true);
-    apiFetch<CalendarData>(`/calendar?country_id=${selectedCountry.id}&year=${year}`)
+    const countryId = selectedCountry?.id ?? "all";
+    apiFetch<CalendarData>(`/calendar?country_id=${countryId}&year=${year}`)
       .then((res) => {
         if (res.data) setCalendarData(res.data);
-        if (res.error) toast({ title: "Error loading calendar", description: res.error, variant: "destructive" });
+        if (res.error)
+          toast({
+            title: "Error loading calendar",
+            description: res.error,
+            variant: "destructive",
+          });
       })
       .finally(() => setLoading(false));
   }, [selectedCountry?.id, year]);
-
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Annual Audit Calendar</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Annual Audit Calendar
+            </h1>
             <p className="text-gray-500 mt-1">
               Controls scheduled for testing based on their audit frequency
               {calendarData && (
@@ -215,20 +230,12 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* Loading / empty states */}
-      {loading && (
-        <div className="text-center py-24 text-gray-400">Loading calendar...</div>
+      {!loading && !calendarData && (
+        <div className="text-center py-24 text-gray-400">
+          No controls scheduled for {year}.
+        </div>
       )}
 
-      {!loading && !selectedCountry && (
-        <div className="text-center py-24 text-gray-400">Please select a country to view the calendar.</div>
-      )}
-
-      {!loading && selectedCountry && calendarData && calendarData.calendar.length === 0 && (
-        <div className="text-center py-24 text-gray-400">No controls scheduled for {year}.</div>
-      )}
-
-      {/* Calendar grid — rendered directly from API data */}
       {!loading && calendarData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {calendarData.calendar.map((m) => (

@@ -19,10 +19,13 @@ import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 import { useCountryStore } from "@/lib/countryStore";
 
+const ALL_COUNTRIES_VALUE = "all";
+
 const AppHeader = () => {
   const navigate = useNavigate();
   const { user, clearAuth } = useAuthStore();
-  const { countries, selectedCountry, setCountries, setSelectedCountry } = useCountryStore();
+  const { countries, selectedCountry, setCountries, setSelectedCountry } =
+    useCountryStore();
 
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
@@ -33,13 +36,14 @@ const AppHeader = () => {
 
   // Load countries from the backend once on mount
   useEffect(() => {
-    apiFetch<{ id: string; name: string; code: string }[]>("/settings/countries")
-      .then((res) => {
-        if (res.data && res.data.length > 0) {
-          setCountries(res.data);
-          setSelectedCountry(res.data[0]); // default to first country
-        }
-      });
+    apiFetch<{ id: string; name: string; code: string }[]>(
+      "/settings/countries"
+    ).then((res) => {
+      if (res.data) {
+        setCountries(res.data);
+        setSelectedCountry(null); // Default to "All Countries"
+      }
+    });
   }, []);
 
   const handleLogout = async () => {
@@ -48,9 +52,23 @@ const AppHeader = () => {
     navigate("/login");
   };
 
+  const handleCountryChange = (value: string) => {
+    if (value === ALL_COUNTRIES_VALUE) {
+      setSelectedCountry(null);
+    } else {
+      const found = countries.find((c) => c.id === value);
+      if (found) setSelectedCountry(found);
+    }
+  };
+
   // Get initials from user's name for avatar
   const initials = user?.fullName
-    ? user.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    ? user.fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "AU";
 
   return (
@@ -66,16 +84,15 @@ const AppHeader = () => {
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Country:</span>
           <Select
-            value={selectedCountry?.id ?? ""}
-            onValueChange={(id) => {
-              const found = countries.find((c) => c.id === id);
-              if (found) setSelectedCountry(found);
-            }}
+            value={selectedCountry?.id ?? ALL_COUNTRIES_VALUE}
+            onValueChange={handleCountryChange}
           >
-            <SelectTrigger className="w-36 h-8">
-              <SelectValue placeholder="Select country" />
+            <SelectTrigger className="w-40 h-8">
+              <SelectValue placeholder="All Countries" />
             </SelectTrigger>
             <SelectContent>
+              {/* All Countries option always first */}
+              <SelectItem value={ALL_COUNTRIES_VALUE}>All Countries</SelectItem>
               {countries.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
@@ -104,10 +121,7 @@ const AppHeader = () => {
             >
               <User className="w-4 h-4 mr-2" /> Profile
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut className="w-4 h-4 mr-2" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
