@@ -1,16 +1,29 @@
 import { useState, useEffect } from "react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Plus, Download, Image as ImageIcon, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,8 +33,8 @@ import { useCountryStore } from "@/lib/countryStore";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type IssueSeverity = "low" | "medium" | "high";
-type IssueStatus   = "open" | "in_progress" | "closed";
-type RAG           = "red" | "amber" | "green" | "grey";
+type IssueStatus = "open" | "in_progress" | "closed";
+type RAG = "red" | "amber" | "green" | "grey";
 
 interface Issue {
   id: string;
@@ -52,25 +65,26 @@ interface Control {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "") ?? "http://localhost:5000";
+const BASE_URL =
+  import.meta.env.VITE_API_URL?.replace("/api", "") ?? "http://localhost:5000";
 
 const severityColors: Record<IssueSeverity, string> = {
-  high:   "bg-red-100 text-red-800",
+  high: "bg-red-100 text-red-800",
   medium: "bg-yellow-100 text-yellow-800",
-  low:    "bg-green-100 text-green-800",
+  low: "bg-green-100 text-green-800",
 };
 
 const ragColors: Record<RAG, string> = {
-  red:   "bg-red-500",
+  red: "bg-red-500",
   amber: "bg-yellow-400",
   green: "bg-green-500",
-  grey:  "bg-gray-300",
+  grey: "bg-gray-300",
 };
 
 const statusLabel: Record<IssueStatus, string> = {
-  open:        "Open",
+  open: "Open",
   in_progress: "In Progress",
-  closed:      "Closed",
+  closed: "Closed",
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -79,25 +93,28 @@ const Issues = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
 
-  const [issues, setIssues]               = useState<Issue[]>([]);
-  const [loading, setLoading]             = useState(false);
-  const [statusFilter, setStatusFilter]   = useState<"all" | "open">("all");
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "open">("all");
 
   // Dialogs
-  const [addOpen, setAddOpen]             = useState(false);
-  const [deleteOpen, setDeleteOpen]       = useState(false);
-  const [notesOpen, setNotesOpen]         = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
   // Dropdown data
   const [companyMembers, setCompanyMembers] = useState<CompanyMember[]>([]);
-  const [controls, setControls]           = useState<Control[]>([]);
+  const [controls, setControls] = useState<Control[]>([]);
 
   // Add form
   const [form, setForm] = useState({
-    controlId: "", description: "", severity: "medium" as IssueSeverity,
-    ownerId: "", dueDate: "",
+    controlId: "",
+    description: "",
+    severity: "medium" as IssueSeverity,
+    ownerId: "",
+    dueDate: "",
   });
 
   // Notes edit
@@ -108,15 +125,26 @@ const Issues = () => {
   const loadIssues = () => {
     if (!selectedCountry?.id) return;
     setLoading(true);
-    apiFetch<Issue[]>(`/issues?country_id=${selectedCountry.id}&status=${statusFilter}`)
+    apiFetch<Issue[]>(
+      `/issues?country_id=${
+        selectedCountry ? selectedCountry.id : "all"
+      }&status=${statusFilter}`
+    )
       .then((res) => {
         if (res.data) setIssues(res.data);
-        if (res.error) toast({ title: "Error", description: res.error, variant: "destructive" });
+        if (res.error)
+          toast({
+            title: "Error",
+            description: res.error,
+            variant: "destructive",
+          });
       })
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadIssues(); }, [selectedCountry?.id, statusFilter]);
+  useEffect(() => {
+    loadIssues();
+  }, [selectedCountry?.id, statusFilter]);
 
   // ── Load dropdowns ───────────────────────────────────────────────────────
 
@@ -136,8 +164,13 @@ const Issues = () => {
       method: "PUT",
       body: JSON.stringify({ status: newStatus }),
     });
-    if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
-    setIssues((prev) => prev.map((i) => i.id === id ? { ...i, status: newStatus } : i));
+    if (res.error) {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+      return;
+    }
+    setIssues((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i))
+    );
     setEditingStatusId(null);
   };
 
@@ -147,19 +180,40 @@ const Issues = () => {
     if (!file) return;
     const formData = new FormData();
     formData.append("issue_evidence", file);
-    const uploadRes = await apiFetch<{ url: string }>("/uploads/issue-evidence", {
-      method: "POST",
-      body: formData,
-    });
-    if (uploadRes.error) { toast({ title: "Upload failed", description: uploadRes.error, variant: "destructive" }); return; }
+    const uploadRes = await apiFetch<{ url: string }>(
+      "/uploads/issue-evidence",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+    if (uploadRes.error) {
+      toast({
+        title: "Upload failed",
+        description: uploadRes.error,
+        variant: "destructive",
+      });
+      return;
+    }
     if (!uploadRes.data?.url) return;
 
     const updateRes = await apiFetch(`/issues/${id}`, {
       method: "PUT",
       body: JSON.stringify({ evidenceUrl: uploadRes.data.url }),
     });
-    if (updateRes.error) { toast({ title: "Error saving evidence", description: updateRes.error, variant: "destructive" }); return; }
-    setIssues((prev) => prev.map((i) => i.id === id ? { ...i, evidenceUrl: uploadRes.data!.url } : i));
+    if (updateRes.error) {
+      toast({
+        title: "Error saving evidence",
+        description: updateRes.error,
+        variant: "destructive",
+      });
+      return;
+    }
+    setIssues((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, evidenceUrl: uploadRes.data!.url } : i
+      )
+    );
     toast({ title: "Evidence uploaded" });
   };
 
@@ -171,8 +225,15 @@ const Issues = () => {
       method: "PUT",
       body: JSON.stringify({ description: editNotes }),
     });
-    if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
-    setIssues((prev) => prev.map((i) => i.id === selectedIssue.id ? { ...i, description: editNotes } : i));
+    if (res.error) {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+      return;
+    }
+    setIssues((prev) =>
+      prev.map((i) =>
+        i.id === selectedIssue.id ? { ...i, description: editNotes } : i
+      )
+    );
     toast({ title: "Notes updated" });
     setNotesOpen(false);
   };
@@ -182,10 +243,10 @@ const Issues = () => {
   const saveNewIssue = async () => {
     if (!form.controlId || !form.description || !selectedCountry?.id) return;
     const body: Record<string, any> = {
-      countryId:   selectedCountry.id,
-      controlId:   form.controlId,
+      countryId: selectedCountry.id,
+      controlId: form.controlId,
       description: form.description,
-      severity:    form.severity,
+      severity: form.severity,
     };
     if (form.ownerId) body.ownerId = form.ownerId;
     if (form.dueDate) body.dueDate = form.dueDate;
@@ -194,10 +255,19 @@ const Issues = () => {
       method: "POST",
       body: JSON.stringify(body),
     });
-    if (res.error) { toast({ title: "Error", description: res.error, variant: "destructive" }); return; }
+    if (res.error) {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+      return;
+    }
     if (res.data) setIssues((prev) => [res.data!, ...prev]);
     toast({ title: "Issue created" });
-    setForm({ controlId: "", description: "", severity: "medium", ownerId: "", dueDate: "" });
+    setForm({
+      controlId: "",
+      description: "",
+      severity: "medium",
+      ownerId: "",
+      dueDate: "",
+    });
     setAddOpen(false);
   };
 
@@ -209,7 +279,16 @@ const Issues = () => {
 
   const handleExportCSV = () => {
     const rows = [
-      ["Issue ID", "Control", "Description", "Severity", "Status", "Owner", "Due Date", "RAG"],
+      [
+        "Issue ID",
+        "Control",
+        "Description",
+        "Severity",
+        "Status",
+        "Owner",
+        "Due Date",
+        "RAG",
+      ],
       ...issues.map((i) => [
         i.issueId,
         i.control?.controlId ?? "",
@@ -244,8 +323,13 @@ const Issues = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | "open")}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as "all" | "open")}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Issues</SelectItem>
               <SelectItem value="open">Open Only</SelectItem>
@@ -279,25 +363,51 @@ const Issues = () => {
           </TableHeader>
           <TableBody>
             {loading && (
-              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              <TableRow>
+                <TableCell
+                  colSpan={10}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
             )}
             {!loading && issues.length === 0 && (
-              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No issues found</TableCell></TableRow>
+              <TableRow>
+                <TableCell
+                  colSpan={10}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  No issues found
+                </TableCell>
+              </TableRow>
             )}
             {issues.map((i) => (
               <TableRow key={i.id}>
                 {/* RAG dot */}
                 <TableCell>
-                  <span className={`inline-block w-3 h-3 rounded-full ${ragColors[i.rag]}`} title={i.rag} />
+                  <span
+                    className={`inline-block w-3 h-3 rounded-full ${
+                      ragColors[i.rag]
+                    }`}
+                    title={i.rag}
+                  />
                 </TableCell>
 
                 <TableCell className="font-semibold">{i.issueId}</TableCell>
-                <TableCell className="max-w-xs truncate">{i.description}</TableCell>
-                <TableCell className="font-mono">{i.control?.controlId ?? "—"}</TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {i.description}
+                </TableCell>
+                <TableCell className="font-mono">
+                  {i.control?.controlId ?? "—"}
+                </TableCell>
 
                 {/* Severity */}
                 <TableCell>
-                  <Badge className={severityColors[i.severity]} style={{ textTransform: "capitalize" }}>
+                  <Badge
+                    className={severityColors[i.severity]}
+                    style={{ textTransform: "capitalize" }}
+                  >
                     {i.severity}
                   </Badge>
                 </TableCell>
@@ -307,9 +417,13 @@ const Issues = () => {
                   {editingStatusId === i.id ? (
                     <Select
                       value={i.status}
-                      onValueChange={(v) => updateStatus(i.id, v as IssueStatus)}
+                      onValueChange={(v) =>
+                        updateStatus(i.id, v as IssueStatus)
+                      }
                     >
-                      <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="open">Open</SelectItem>
                         <SelectItem value="in_progress">In Progress</SelectItem>
@@ -328,13 +442,24 @@ const Issues = () => {
                 </TableCell>
 
                 <TableCell>{i.owner?.fullName ?? "—"}</TableCell>
-                <TableCell>{i.dueDate ? new Date(i.dueDate).toLocaleDateString() : "—"}</TableCell>
+                <TableCell>
+                  {i.dueDate ? new Date(i.dueDate).toLocaleDateString() : "—"}
+                </TableCell>
 
                 {/* Evidence */}
                 <TableCell>
                   {i.evidenceUrl ? (
-                    <a href={`${BASE_URL}${i.evidenceUrl}`} target="_blank" rel="noopener noreferrer">
-                      <Badge variant="outline" className="text-blue-600 border-blue-300">View</Badge>
+                    <a
+                      href={`${BASE_URL}${i.evidenceUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Badge
+                        variant="outline"
+                        className="text-blue-600 border-blue-300"
+                      >
+                        View
+                      </Badge>
                     </a>
                   ) : (
                     <label className="cursor-pointer text-xs flex items-center gap-1 text-muted-foreground hover:text-primary">
@@ -343,7 +468,12 @@ const Issues = () => {
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
                         className="hidden"
-                        onChange={(e) => handleEvidenceUpload(i.id, e.target.files?.[0] || null)}
+                        onChange={(e) =>
+                          handleEvidenceUpload(
+                            i.id,
+                            e.target.files?.[0] || null
+                          )
+                        }
                       />
                     </label>
                   )}
@@ -374,16 +504,25 @@ const Issues = () => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Log Manual Issue</DialogTitle>
-            <DialogDescription>Usually issues are created automatically from failed tests.</DialogDescription>
+            <DialogDescription>
+              Usually issues are created automatically from failed tests.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium">Control</label>
-              <Select value={form.controlId} onValueChange={(v) => setForm({ ...form, controlId: v })}>
-                <SelectTrigger><SelectValue placeholder="Select control" /></SelectTrigger>
+              <Select
+                value={form.controlId}
+                onValueChange={(v) => setForm({ ...form, controlId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select control" />
+                </SelectTrigger>
                 <SelectContent>
                   {controls.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.controlId} — {c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.controlId} — {c.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -393,13 +532,22 @@ const Issues = () => {
               <Input
                 placeholder="Describe the issue..."
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
               />
             </div>
             <div>
               <label className="text-sm font-medium">Severity</label>
-              <Select value={form.severity} onValueChange={(v) => setForm({ ...form, severity: v as IssueSeverity })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.severity}
+                onValueChange={(v) =>
+                  setForm({ ...form, severity: v as IssueSeverity })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
@@ -409,11 +557,18 @@ const Issues = () => {
             </div>
             <div>
               <label className="text-sm font-medium">Owner</label>
-              <Select value={form.ownerId} onValueChange={(v) => setForm({ ...form, ownerId: v })}>
-                <SelectTrigger><SelectValue placeholder="Select owner (optional)" /></SelectTrigger>
+              <Select
+                value={form.ownerId}
+                onValueChange={(v) => setForm({ ...form, ownerId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select owner (optional)" />
+                </SelectTrigger>
                 <SelectContent>
                   {companyMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.fullName} — {m.email}</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.fullName} — {m.email}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -428,8 +583,15 @@ const Issues = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={saveNewIssue} disabled={!form.controlId || !form.description}>Create Issue</Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveNewIssue}
+              disabled={!form.controlId || !form.description}
+            >
+              Create Issue
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -447,7 +609,9 @@ const Issues = () => {
             placeholder="Update issue description..."
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNotesOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setNotesOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSaveNotes}>Save</Button>
           </DialogFooter>
         </DialogContent>
@@ -459,12 +623,17 @@ const Issues = () => {
           <DialogHeader>
             <DialogTitle>Delete Issue</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {selectedIssue?.issueId}? This action cannot be undone.
+              Are you sure you want to delete {selectedIssue?.issueId}? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" disabled>Delete Issue</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled>
+              Delete Issue
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
