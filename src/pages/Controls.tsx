@@ -67,7 +67,7 @@ const Controls = () => {
   const [editingControl, setEditingControl] = useState<Control | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
-  const [keyAreaFilter, setKeyAreaFilter] = useState("all");
+  const [domainFilter, setDomainFilter] = useState("all");
 
   useEffect(() => {
     apiFetch<CompanyMember[]>("/company/members").then((r) => {
