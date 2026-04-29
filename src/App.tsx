@@ -31,7 +31,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -53,51 +53,115 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/complete-registration" element={<CompleteRegistration />} />
-      <Route path="/invite/:token" element={<AcceptInvite />} />
+      <Route path="/accept-invite/:token" element={<AcceptInvite />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/demo" element={<Demo />} />
-      
 
       <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={
-          <ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>
-        } />
-        <Route path="/consolidated" element={
-          <ProtectedRoute path="/consolidated"><Consolidated /></ProtectedRoute>
-        } />
-        <Route path="/controls" element={
-          <ProtectedRoute path="/controls"><Controls /></ProtectedRoute>
-        } />
-        <Route path="/test-plan" element={
-          <ProtectedRoute path="/test-plan"><TestPlan /></ProtectedRoute>
-        } />
-        <Route path="/testing" element={
-          <ProtectedRoute path="/testing"><Testing /></ProtectedRoute>
-        } />
-        <Route path="/monthly-report" element={
-          <ProtectedRoute path="/monthly-report"><MonthlyReport /></ProtectedRoute>
-        } />
-        <Route path="/issues" element={
-          <ProtectedRoute path="/issues"><Issues /></ProtectedRoute>
-        } />
-        <Route path="/actions" element={
-          <ProtectedRoute path="/actions"><Actions /></ProtectedRoute>
-        } />
-        <Route path="/audit" element={
-          <ProtectedRoute path="/audit"><Audit /></ProtectedRoute>
-        } />
-        <Route path="/calendar" element={
-          <ProtectedRoute path="/calendar"><CalendarPage /></ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute path="/settings"><SettingsPage /></ProtectedRoute>
-        } />
-        <Route path="/billing" element={
-          <ProtectedRoute path="/billing"><Billing /></ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute path="/profile"><Profile /></ProtectedRoute>
-        } />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute path="/dashboard">
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/consolidated"
+          element={
+            <ProtectedRoute path="/consolidated">
+              <Consolidated />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/controls"
+          element={
+            <ProtectedRoute path="/controls">
+              <Controls />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/test-plan"
+          element={
+            <ProtectedRoute path="/test-plan">
+              <TestPlan />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/testing"
+          element={
+            <ProtectedRoute path="/testing">
+              <Testing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monthly-report"
+          element={
+            <ProtectedRoute path="/monthly-report">
+              <MonthlyReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/issues"
+          element={
+            <ProtectedRoute path="/issues">
+              <Issues />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/actions"
+          element={
+            <ProtectedRoute path="/actions">
+              <Actions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/audit"
+          element={
+            <ProtectedRoute path="/audit">
+              <Audit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute path="/calendar">
+              <CalendarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute path="/settings">
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute path="/billing">
+              <Billing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute path="/profile">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<NotFound />} />
