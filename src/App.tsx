@@ -28,6 +28,8 @@ import Demo from "./pages/Demo";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import CompleteRegistration from "./pages/CompleteRegistration";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 import { Navigate } from 'react-router-dom';
 
@@ -50,6 +52,8 @@ const AppRoutes = () => {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/complete-registration" element={<CompleteRegistration />} />
+      <Route path="/invite/:token" element={<AcceptInvite />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/demo" element={<Demo />} />
       
