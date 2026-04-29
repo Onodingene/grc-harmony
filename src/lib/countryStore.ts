@@ -1,12 +1,16 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-interface Country { id: string; name: string; code: string; }
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+}
 
 interface CountryStore {
   countries: Country[];
   selectedCountry: Country | null;
   setCountries: (c: Country[]) => void;
-  setSelectedCountry: (c: Country) => void;
+  setSelectedCountry: (c: Country | null) => void;
 }
 
 export const useCountryStore = create<CountryStore>((set) => ({
