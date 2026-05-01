@@ -53,7 +53,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/complete-registration" element={<CompleteRegistration />} />
-      <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/demo" element={<Demo />} />
 
