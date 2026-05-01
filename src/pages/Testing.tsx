@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus, Eye, Upload } from "lucide-react";
+import { Download, Plus, Eye } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
@@ -66,6 +66,20 @@ const statusColors: Record<string, string> = {
   exception: "bg-orange-100 text-orange-800",
 };
 
+const months = Array.from({ length: 12 }, (_, i) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - i);
+
+  return {
+    value: d.toISOString().slice(0, 7),
+    label: d.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    }),
+    key: Math.random(),
+  };
+});
+
 const emptyForm = {
   controlId: "",
   countryId: "",
@@ -77,13 +91,15 @@ const emptyForm = {
   result: "pass" as "pass" | "exception" | "fail",
   testProcedure: "",
   comments: "",
-  evidenceUrl: "",
 };
 
 const Testing = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
 
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [tests, setTests] = useState<TestResult[]>([]);
   const [availableControls, setAvailableControls] = useState<
     AvailableControl[]
@@ -91,59 +107,105 @@ const Testing = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [selectedControlId, setSelectedControlId] = useState<string>("");
+  const [selectedControlId, setSelectedControlId] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const [countries, setCountries] = useState<
+    { id: string; name: string; code: string }[]
+  >([]);
 
-  useEffect(() => {
-    if (!selectedCountry) return;
+  const buildTestName = (controlId: string, period: string) => {
+    const ctrl = availableControls.find((c) => c.id === controlId);
+
+    if (!ctrl) return "";
+
+    return `${ctrl.controlId} — ${ctrl.name} ${period}`;
+  };
+
+  const loadPageData = async (month: string) => {
     setLoading(true);
 
-    Promise.all([
+    const countryId = selectedCountry ? selectedCountry.id : "all";
+
+    const [resultsRes, availableRes] = await Promise.all([
       apiFetch<TestResult[]>(
-        `/testing/results?country_id=${
-          selectedCountry ? selectedCountry.id : "all"
-        }&month=${currentMonth}`
+        `/testing/results?country_id=${countryId}&month=${month}`
       ),
       apiFetch<AvailableControl[]>(
-        `/testing/available?country_id=${
-          selectedCountry ? selectedCountry.id : "all"
-        }&month=${currentMonth}`
+        `/testing/available?country_id=${countryId}&month=${month}`
       ),
-    ])
-      .then(([resultsRes, availableRes]) => {
-        if (resultsRes.data) setTests(resultsRes.data);
-        if (availableRes.data) setAvailableControls(availableRes.data);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedCountry]);
+    ]);
 
-  const openAdd = () => {
+    if (resultsRes.data) setTests(resultsRes.data);
+    if (availableRes.data) setAvailableControls(availableRes.data);
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    apiFetch<{ id: string; name: string; code: string }[]>(
+      "/settings/countries"
+    ).then((res) => {
+      if (res.data) {
+        setCountries(res.data);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    loadPageData(selectedMonth);
+  }, [selectedCountry, selectedMonth]);
+
+  const openAdd = async () => {
+    const countryId = selectedCountry?.id ?? "";
+
     setForm({
       ...emptyForm,
-      countryId: selectedCountry?.id ?? "",
+      countryId,
       period: currentMonth,
     });
+
     setEvidenceFile(null);
+
+    const res = await apiFetch<AvailableControl[]>(
+      `/testing/available?country_id=${
+        selectedCountry ? selectedCountry.id : "all"
+      }&month=${currentMonth}`
+    );
+
+    if (res.data) setAvailableControls(res.data);
+
     setOpen(true);
+  };
+
+  const refreshControlsForFormMonth = async (period: string) => {
+    const res = await apiFetch<AvailableControl[]>(
+      `/testing/available?country_id=${
+        selectedCountry ? selectedCountry.id : "all"
+      }&month=${period}`
+    );
+
+    if (res.data) setAvailableControls(res.data);
   };
 
   const handleSave = async () => {
     if (!form.controlId || !form.testName) return;
+
     setSaving(true);
 
     let evidenceUrl = "";
 
-    // Step 1: upload evidence file first if selected
     if (evidenceFile) {
       setUploading(true);
+
       const fd = new FormData();
       fd.append("test_evidence", evidenceFile);
+
       const token = getAccessToken();
+
       const uploadRes = await fetch(
         `${import.meta.env.VITE_API_URL}/uploads/test-evidence`,
         {
@@ -153,39 +215,54 @@ const Testing = () => {
           body: fd,
         }
       );
+
       const uploadData = await uploadRes.json();
+      // console.log(uploadData);
+
       setUploading(false);
+
       if (uploadData.error) {
         toast({
           title: "Upload failed",
           description: uploadData.error,
           variant: "destructive",
         });
+
         setSaving(false);
         return;
       }
+
       evidenceUrl = uploadData.data.url;
     }
 
-    // Step 2: log the test
     const res = await apiFetch<TestResult>("/testing/log", {
       method: "POST",
-      body: JSON.stringify({ ...form, evidenceUrl: evidenceUrl || undefined }),
+      body: JSON.stringify({
+        ...form,
+        evidenceUrl: evidenceUrl || undefined,
+      }),
     });
 
     setSaving(false);
 
     if (res.error) {
-      toast({ title: "Error", description: res.error, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: res.error,
+        variant: "destructive",
+      });
       return;
     }
 
     if (res.data) {
-      setTests((prev) => [res.data!, ...prev]);
-      // Remove from available controls since it's now tested
+      if (form.period === selectedMonth) {
+        setTests((prev) => [res.data!, ...prev]);
+      }
+
       setAvailableControls((prev) =>
         prev.filter((c) => c.id !== form.controlId)
       );
+
       toast({
         title: "Test logged",
         description: `Result: ${form.result.toUpperCase()}${
@@ -207,21 +284,25 @@ const Testing = () => {
   );
 
   const exportCSV = () => {
+    if (!tests.length) return;
+
     const rows = tests.map((t) => ({
       "Test ID": t.testId,
       "Control ID": t.control?.controlId,
       Name: t.control?.name,
+      Period: t.period,
       Date: t.testedAt,
       Sample: t.sampleSize,
       Population: t.population,
       Exceptions: t.exceptions,
       Result: t.result,
     }));
-    if (!rows.length) return;
+
     const csv = [
       Object.keys(rows[0]).join(","),
       ...rows.map((r) => Object.values(r).join(",")),
     ].join("\n");
+
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     a.download = "testing.csv";
@@ -237,10 +318,25 @@ const Testing = () => {
             Record and track control test executions — {selectedCountry?.name}
           </p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex items-center gap-2">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((m) => (
+                <SelectItem key={m.key} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button variant="outline" onClick={exportCSV}>
             <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
+
           <Button onClick={openAdd} disabled={availableControls.length === 0}>
             <Plus className="w-4 h-4 mr-1" /> Record New Test
           </Button>
@@ -250,8 +346,8 @@ const Testing = () => {
       {availableControls.length > 0 && (
         <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-800">
           {availableControls.length} control
-          {availableControls.length > 1 ? "s" : ""} still pending testing this
-          month.
+          {availableControls.length > 1 ? "s" : ""} still pending testing for
+          this selected period.
         </div>
       )}
 
@@ -262,58 +358,47 @@ const Testing = () => {
               <TableHead>Test ID</TableHead>
               <TableHead>Control ID</TableHead>
               <TableHead>Test Name</TableHead>
+              <TableHead>Period</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Sample</TableHead>
-              <TableHead>Population</TableHead>
-              <TableHead>Exceptions</TableHead>
               <TableHead>Result</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell
-                  colSpan={9}
-                  className="text-center py-8 text-muted-foreground"
-                >
+                <TableCell colSpan={7} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : tests.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={9}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  No tests recorded this month.
+                <TableCell colSpan={7} className="text-center py-8">
+                  No tests recorded.
                 </TableCell>
               </TableRow>
             ) : (
               tests.map((t) => (
                 <TableRow key={t.id}>
-                  <TableCell className="font-semibold">{t.testId}</TableCell>
+                  <TableCell>{t.testId}</TableCell>
                   <TableCell>{t.control?.controlId}</TableCell>
                   <TableCell>{t.testName}</TableCell>
+                  <TableCell>{t.period}</TableCell>
                   <TableCell>
                     {new Date(t.testedAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{t.sampleSize}</TableCell>
-                  <TableCell>{t.population}</TableCell>
-                  <TableCell>{t.exceptions}</TableCell>
                   <TableCell>
-                    <Badge className={statusColors[t.result] ?? ""}>
-                      {t.result.charAt(0).toUpperCase() + t.result.slice(1)}
-                    </Badge>
+                    <Badge className={statusColors[t.result]}>{t.result}</Badge>
                   </TableCell>
                   <TableCell>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs"
                       onClick={() => viewHistory(t.control?.controlId)}
                     >
-                      <Eye className="w-3 h-3 mr-1" /> History
+                      <Eye className="w-3 h-3 mr-1" />
+                      History
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -323,26 +408,48 @@ const Testing = () => {
         </Table>
       </div>
 
-      {/* Record Test Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Record New Test</DialogTitle>
           </DialogHeader>
+
           <div className="grid grid-cols-2 gap-4 py-2">
+            <div className="col-span-2 grid gap-1.5">
+              <Label>Country</Label>
+              <Select
+                onValueChange={(v) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    countryId: v,
+                  }));
+                }}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select a Country" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+
+                  {countries.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="col-span-2 grid gap-1.5">
               <Label>Control</Label>
               <Select
                 value={form.controlId}
                 onValueChange={(v) => {
-                  const ctrl = availableControls.find((c) => c.id === v);
-                  setForm({
-                    ...form,
+                  setForm((prev) => ({
+                    ...prev,
                     controlId: v,
-                    testName: ctrl
-                      ? `${ctrl.controlId} — ${ctrl.name} ${currentMonth}`
-                      : "",
-                  });
+                    testName: buildTestName(v, prev.period),
+                  }));
                 }}
               >
                 <SelectTrigger>
@@ -357,6 +464,40 @@ const Testing = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="grid gap-1.5">
+              <Label>Period</Label>
+              <Select
+                value={form.period}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    period: v,
+                    testName: form.controlId
+                      ? `${
+                          availableControls.find((c) => c.id === form.controlId)
+                            ?.controlId
+                        } — ${
+                          availableControls.find((c) => c.id === form.controlId)
+                            ?.name
+                        } ${v}`
+                      : form.testName,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((m) => (
+                    <SelectItem key={m.key} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="col-span-2 grid gap-1.5">
               <Label>Test Name</Label>
               <Input
@@ -364,6 +505,7 @@ const Testing = () => {
                 onChange={(e) => setForm({ ...form, testName: e.target.value })}
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Population</Label>
               <Input
@@ -375,6 +517,7 @@ const Testing = () => {
                 }
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Sample Size</Label>
               <Input
@@ -386,6 +529,7 @@ const Testing = () => {
                 }
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Exceptions Found</Label>
               <Input
@@ -397,6 +541,7 @@ const Testing = () => {
                 }
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Result</Label>
               <Select
@@ -415,6 +560,7 @@ const Testing = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="col-span-2 grid gap-1.5">
               <Label>Test Procedure</Label>
               <Textarea
@@ -424,6 +570,7 @@ const Testing = () => {
                 }
               />
             </div>
+
             <div className="col-span-2 grid gap-1.5">
               <Label>Comments</Label>
               <Textarea
@@ -431,6 +578,7 @@ const Testing = () => {
                 onChange={(e) => setForm({ ...form, comments: e.target.value })}
               />
             </div>
+
             <div className="col-span-2 grid gap-1.5">
               <Label>Evidence File (optional)</Label>
               <div className="flex items-center gap-2">
@@ -449,6 +597,7 @@ const Testing = () => {
                 PDF, JPEG, PNG, WebP, XLSX, CSV — max 10MB
               </p>
             </div>
+
             {form.result !== "pass" && (
               <div className="col-span-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
                 ⚠ An issue will be automatically created for this {form.result}{" "}
@@ -456,6 +605,7 @@ const Testing = () => {
               </div>
             )}
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
@@ -464,53 +614,6 @@ const Testing = () => {
               {uploading ? "Uploading..." : saving ? "Saving..." : "Save Test"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* History Dialog */}
-      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Test History — {selectedControlId}</DialogTitle>
-          </DialogHeader>
-          {historyTests.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4">
-              No test history for this control.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Test ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Sample</TableHead>
-                  <TableHead>Exceptions</TableHead>
-                  <TableHead>Result</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historyTests.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-semibold">{t.testId}</TableCell>
-                    <TableCell>
-                      {new Date(t.testedAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{t.testName}</TableCell>
-                    <TableCell>
-                      {t.sampleSize}/{t.population}
-                    </TableCell>
-                    <TableCell>{t.exceptions}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[t.result] ?? ""}>
-                        {t.result}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
         </DialogContent>
       </Dialog>
     </div>

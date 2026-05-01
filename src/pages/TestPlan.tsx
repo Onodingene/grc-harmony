@@ -75,7 +75,7 @@ const TestPlan = () => {
   });
 
   useEffect(() => {
-    if (!selectedCountry) return;
+    // if (!selectedCountry) return;
     setLoading(true);
     apiFetch<TestPlanRow[]>(
       `/test-plan?country_id=${
@@ -83,8 +83,11 @@ const TestPlan = () => {
       }&month=${monthFilter}`
     )
       .then((res) => {
+        console.log(res);
+
         if (res.data) setData(res.data);
       })
+      .catch((e) => console.error(e))
       .finally(() => setLoading(false));
   }, [selectedCountry, monthFilter]);
 

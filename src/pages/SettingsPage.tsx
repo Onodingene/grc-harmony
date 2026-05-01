@@ -46,6 +46,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
+import { Textarea } from "@/components/ui/textarea";
 
 type Role = "admin" | "control_owner" | "tester" | "viewer";
 
@@ -61,6 +62,7 @@ interface MCSControl {
   id: string;
   controlId: string;
   name: string;
+  description: string;
   domain: string;
   risk: string;
   frequency: string;
@@ -139,6 +141,7 @@ const SettingsPage = () => {
   const [newControl, setNewControl] = useState({
     controlId: "",
     name: "",
+    description: "",
     domain: "",
     risk: "",
     frequency: "monthly",
@@ -313,6 +316,7 @@ const SettingsPage = () => {
     setNewControl({
       controlId: "",
       name: "",
+      description: "",
       domain: "",
       risk: "",
       frequency: "monthly",
@@ -336,6 +340,8 @@ const SettingsPage = () => {
         body: JSON.stringify({
           name: selectedControl.name,
           domain: selectedControl.domain,
+          description: selectedControl.description,
+          testDueDay: selectedControl.testDueDay || 15,
           risk: selectedControl.risk,
           frequency: selectedControl.frequency,
           status: selectedControl.status,
@@ -879,6 +885,16 @@ const SettingsPage = () => {
               />
             </div>
             <div>
+              <label className="text-sm font-medium">Control Description</label>
+              <Textarea
+                placeholder=""
+                value={newControl.description}
+                onChange={(e) =>
+                  setNewControl({ ...newControl, description: e.target.value })
+                }
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium">Domain</label>
               <Select
                 value={newControl.domain}
@@ -959,6 +975,28 @@ const SettingsPage = () => {
               </Select>
             </div>
             <div>
+              <label className="text-sm font-medium">
+                Test Due Day{" "}
+                <span className="text-muted-foreground">(optional)</span>
+              </label>
+              <Input
+                type="number"
+                min={1}
+                max={31}
+                placeholder="e.g. 15"
+                value={newControl.testDueDay || ""}
+                onChange={(e) =>
+                  setNewControl({
+                    ...newControl,
+                    testDueDay: e.target.value ? Number(e.target.value) : 0,
+                  })
+                }
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Day of the month control testing is due.
+              </p>
+            </div>
+            <div>
               <label className="text-sm font-medium">Nature</label>
               <Select
                 value={newControl.nature}
@@ -971,9 +1009,7 @@ const SettingsPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="it_dependent_manual">
-                    IT Dependent Manual
-                  </SelectItem>
+                  <SelectItem value="automated">Automated</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1083,6 +1119,18 @@ const SettingsPage = () => {
                 />
               </div>
               <div>
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={selectedControl.description}
+                  onChange={(e) =>
+                    setSelectedControl({
+                      ...selectedControl,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div>
                 <label className="text-sm font-medium">Domain</label>
                 <Select
                   value={selectedControl.domain}
@@ -1145,6 +1193,28 @@ const SettingsPage = () => {
                     <SelectItem value="as_needed">As needed</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  Test Due Day{" "}
+                  <span className="text-muted-foreground">(optional)</span>
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={31}
+                  placeholder="e.g. 15"
+                  value={selectedControl.testDueDay || ""}
+                  onChange={(e) =>
+                    setSelectedControl({
+                      ...selectedControl,
+                      testDueDay: Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Day of the month control testing is due.
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium">Owner</label>

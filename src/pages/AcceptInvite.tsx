@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,10 +64,13 @@ const roleLabel: Record<
 };
 
 const AcceptInvite = () => {
-  const { token } = useParams<{ token: string }>();
+  // const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setAuth } = useAuthStore();
+
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
 
   const [invite, setInvite] = useState<Invite | null>(null);
   const [loading, setLoading] = useState(true);
@@ -249,6 +257,13 @@ const AcceptInvite = () => {
                   // IMPORTANT: backend may return INVALID_PASSWORD
                   if (res.error === "INVALID_PASSWORD") {
                     setError("Incorrect password");
+                    return;
+                  }
+
+                  if (res.error === "NO_PASSWORD_SET") {
+                    setError(
+                      "This account uses Google Auth. Please sign in via your provider."
+                    );
                     return;
                   }
 
