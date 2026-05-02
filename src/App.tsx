@@ -146,14 +146,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/billing"
           element={
             <ProtectedRoute path="/billing">
               <Billing />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/profile"
           element={

@@ -577,7 +577,7 @@ const SettingsPage = () => {
                 <TableRow className="bg-primary/10">
                   <TableHead>Control ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Domain</TableHead>
+                  <TableHead>Key Areas</TableHead>
                   <TableHead>Frequency</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Owner</TableHead>
@@ -903,7 +903,7 @@ const SettingsPage = () => {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select domain" />
+                  <SelectValue placeholder="Select key area" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Fixed Asset">Fixed Asset</SelectItem>

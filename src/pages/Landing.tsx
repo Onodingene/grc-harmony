@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, BarChart3, Lock, Globe, ChevronRight, CheckCircle, ArrowRight } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const features = [
   { icon: Shield, title: "Risk & Control Matrix", desc: "Comprehensive control library with MCS and ICOFR frameworks built for enterprise scale." },
@@ -33,47 +34,65 @@ const MUSTARD_MID = "#FEF0A0";
 const Landing = () => {
   return (
     <div className="min-h-screen font-sans" style={{ background: "#ffffff", color: "#1a1a1a" }}>
-
       {/* Top utility bar — mustard */}
-      <div style={{ background: MUSTARD }} className="text-black text-xs py-2 px-8 hidden md:flex justify-end gap-6">
-        <a href="#" className="hover:underline font-semibold">Documentation</a>
-        <Link to="/pricing" className="hover:underline font-semibold">Pricing</Link>
-        <a href="#" className="hover:underline font-semibold">Support</a>
+<div
+  style={{ background: MUSTARD }}
+  className="text-black text-xs py-4 px-4 hidden md:flex justify-end gap-6"
+>
+  <a href="#" className="hover:underline font-semibold">Documentation</a>
+  <Link to="/pricing" className="hover:underline font-semibold">Pricing</Link>
+  <a href="#" className="hover:underline font-semibold">Support</a>
+</div>
+
+{/* Nav — white with logo */}
+<nav className=" z-50 bg-white border-b border-gray-200 shadow-sm">
+  <div className="flex items-center justify-between px-4 py-2 max-w-7xl mx-auto">
+
+    {/* LEFT SIDE */}
+    <div className="flex items-center gap-10">
+
+      {/* Logo */}
+      <div className="flex items-center">
+        <img 
+          src={logo}
+          alt="GRC Control Tool Logo" 
+          className="h-24 w-full"
+        />
       </div>
 
-      {/* Nav — white with mustard logo */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-2">
-              {/* Sun-king style logo dot */}
-              <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: MUSTARD }}>
-                <span className="text-black text-xs font-black">G</span>
-              </div>
-              <h1 className="text-base font-bold text-gray-900 tracking-tight">GRC Control Tool</h1>
-            </div>
-            <div className="hidden md:flex gap-6 text-sm text-gray-500">
-              <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-              <a href="#solutions" className="hover:text-gray-900 transition-colors">Solutions</a>
-              <Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
-              <a href="#" className="hover:text-gray-900 transition-colors">Resources</a>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Link to="/login">
-              <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-                Sign in
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button className="text-black font-semibold text-sm px-5 border-0" style={{ background: MUSTARD }}>
-                Get started free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      {/* Nav Links */}
+      <div className="hidden md:flex gap-6 text-sm text-gray-500">
+        <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
+        <a href="#solutions" className="hover:text-gray-900 transition-colors">Solutions</a>
+        <Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
+        <a href="#" className="hover:text-gray-900 transition-colors">Resources</a>
+      </div>
 
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="flex items-center gap-3">
+      <Link to="/login">
+        <Button
+          variant="ghost"
+          className="text-gray-600 hover:text-gray-900 text-sm"
+        >
+          Sign in
+        </Button>
+      </Link>
+
+      <Link to="/signup">
+        <Button
+          className="text-black font-semibold text-sm px-5 border-0"
+          style={{ background: MUSTARD }}
+        >
+          Get started free
+        </Button>
+      </Link>
+    </div>
+
+  </div>
+</nav>
       {/* Hero — white with very light mustard tint */}
       <section className="relative overflow-hidden border-b border-gray-100" style={{ background: `linear-gradient(135deg, #ffffff 60%, ${MUSTARD_LIGHT} 100%)` }}>
         <div className="relative max-w-7xl mx-auto px-8 py-20 md:py-28 flex flex-col md:flex-row items-center gap-12">

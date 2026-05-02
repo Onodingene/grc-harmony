@@ -31,20 +31,6 @@ import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 
-const KEY_AREAS = [
-  "Fixed Asset",
-  "HR",
-  "Revenue",
-  "Governance & Compliance",
-  "Inventory",
-  "IT",
-  "Accounting and Reporting",
-  "Taxation",
-  "Treasury",
-  "Sustainability",
-  "Operations",
-] as const;
-
 interface Control {
   id: string;
   controlId: string;
@@ -389,6 +375,7 @@ const Controls = () => {
                   disabled={!!editingControl}
                 />
               </div>
+              
               <div className="grid gap-1.5">
                 <Label>Domain</Label>
                 <Select
