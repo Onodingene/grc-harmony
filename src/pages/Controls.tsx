@@ -168,7 +168,7 @@ const Controls = () => {
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
               <TableHead>Control Name</TableHead>
-              <TableHead>Domain</TableHead>
+              <TableHead>Key Areas</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Tester</TableHead>
               <TableHead>Status</TableHead>
@@ -219,8 +219,9 @@ const Controls = () => {
                 <Label>Control ID</Label>
                 <Input value={form.controlId} onChange={(e) => setForm({ ...form, controlId: e.target.value })} disabled={!!editingControl} />
               </div>
+              
               <div className="grid gap-1.5">
-                <Label>Domain</Label>
+                <Label>Key Areas</Label>
                 <Input value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} placeholder="e.g. Finance & Reporting" />
               </div>
             </div>
