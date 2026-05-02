@@ -16,6 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,7 +30,7 @@ const navItems = [
   // { to: "/audit", label: "Audit", icon: Search },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/billing", label: "Billing", icon: CreditCard },
+  // { to: "/billing", label: "Billing", icon: CreditCard },
 ];
 
 const AppSidebar = () => {
@@ -42,10 +43,12 @@ const AppSidebar = () => {
 
   return (
     <aside className="w-56 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border shrink-0">
-      <div className="p-4 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold text-sidebar-secondary tracking-tight">
-          GRC Control Tool
-        </h1>
+      <div className="border-b border-sidebar-border flex items-center w-full">
+        <img 
+            src={logo}
+            alt="GRC Control Tool Logo" 
+            className="h-32 w-full "
+            />
       </div>
       <nav className="flex-1 py-2 space-y-0.5 px-2">
         {navItems.map((item) => {
