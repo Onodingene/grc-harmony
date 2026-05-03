@@ -16,7 +16,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import logo from "@/assets/logo.png";
+// import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.jpeg";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -47,7 +48,7 @@ const AppSidebar = () => {
         <img 
             src={logo}
             alt="GRC Control Tool Logo" 
-            className="h-32 w-full "
+            className="h-18 w-full "
             />
       </div>
       <nav className="flex-1 py-2 space-y-0.5 px-2">

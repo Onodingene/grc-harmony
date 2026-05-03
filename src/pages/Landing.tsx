@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, BarChart3, Lock, Globe, ChevronRight, CheckCircle, ArrowRight } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.jpeg";
 
 const features = [
   { icon: Shield, title: "Risk & Control Matrix", desc: "Comprehensive control library with MCS and ICOFR frameworks built for enterprise scale." },
@@ -40,7 +40,7 @@ const Landing = () => {
   className="text-black text-xs py-4 px-4 hidden md:flex justify-end gap-6"
 >
   <a href="#" className="hover:underline font-semibold">Documentation</a>
-  <Link to="/pricing" className="hover:underline font-semibold">Pricing</Link>
+  {/* <Link to="/pricing" className="hover:underline font-semibold">Pricing</Link> */}
   <a href="#" className="hover:underline font-semibold">Support</a>
 </div>
 
@@ -56,7 +56,7 @@ const Landing = () => {
         <img 
           src={logo}
           alt="GRC Control Tool Logo" 
-          className="h-24 w-full"
+          className="h-24 max-w-32"
         />
       </div>
 
@@ -64,7 +64,7 @@ const Landing = () => {
       <div className="hidden md:flex gap-6 text-sm text-gray-500">
         <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
         <a href="#solutions" className="hover:text-gray-900 transition-colors">Solutions</a>
-        <Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
+        {/* <Link to="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link> */}
         <a href="#" className="hover:text-gray-900 transition-colors">Resources</a>
       </div>
 
@@ -105,7 +105,7 @@ const Landing = () => {
             <p className="text-base text-gray-500 mb-8 max-w-xl leading-relaxed">
               A unified platform for managing internal controls, audit workflows, regulatory compliance, and risk — built for CFOs, audit teams, and compliance officers.
             </p>
-            <div className="flex flex-wrap gap-4 mb-8">
+            {/* <div className="flex flex-wrap gap-4 mb-8">
               <Link to="/signup">
                 <Button size="lg" className="text-black font-bold px-8 text-sm border-0 shadow-md" style={{ background: MUSTARD }}>
                   Start free trial
@@ -117,7 +117,7 @@ const Landing = () => {
                   Request a demo
                 </Button>
               </Link>
-            </div>
+            </div> */}
             <div className="flex flex-wrap gap-5 text-sm text-gray-400">
               {[ "NDPR & GDPR compliant"].map((item) => (
                 <span key={item} className="flex items-center gap-2">
@@ -256,9 +256,9 @@ const Landing = () => {
           <p className="text-black/60 mb-8 max-w-xl mx-auto text-sm">Join compliance teams across Africa and beyond who have replaced spreadsheets with a platform built for scale.</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/signup">
-              <Button size="lg" className="bg-black hover:bg-gray-900 text-white font-bold px-10 text-sm border-0">
+              {/* <Button size="lg" className="bg-black hover:bg-gray-900 text-white font-bold px-10 text-sm border-0">
                 Start free trial
-              </Button>
+              </Button> */}
             </Link>
             <Link to="/login">
               <Button size="lg" variant="outline" className="border-black/30 text-black hover:bg-black/10 px-10 text-sm bg-transparent">
@@ -273,7 +273,7 @@ const Landing = () => {
       <footer className="bg-white border-t border-gray-200 py-12 px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {[
-            { heading: "Product", links: ["Features", "Pricing", "Changelog", "Roadmap"] },
+            { heading: "Product", links: ["Features", "Changelog", "Roadmap"] },
             { heading: "Solutions", links: ["ICOFR", "Risk Management", "Compliance", "Audit"] },
             { heading: "Resources", links: ["Documentation", "Blog", "Case Studies", "Webinars"] },
             { heading: "Company", links: ["About", "Careers", "Contact", "Privacy Policy"] },
@@ -297,7 +297,7 @@ const Landing = () => {
             </div>
             <span className="font-bold text-gray-900 text-sm">GRC Control Tool</span>
           </div>
-          <span className="text-gray-400 text-xs">© {new Date().getFullYear()} GRC Control Tool. All rights reserved.</span>
+          <span className="text-gray-400 text-xs">© {new Date().getFullYear()} GRC control Sunking Limited. All rights reserved.</span>
         </div>
       </footer>
 
