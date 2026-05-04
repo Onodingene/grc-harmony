@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/lib/supabaseClient";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Mail, Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -18,14 +18,15 @@ const ForgotPassword = () => {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+    const res = await apiFetch("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
     });
 
     setLoading(false);
 
-    if (error) {
-      setError(error.message);
+    if (res.error) {
+      setError(res.error);
       return;
     }
 
@@ -39,7 +40,9 @@ const ForgotPassword = () => {
           <CardTitle className="text-2xl font-bold">
             <span className="text-primary">GRC</span> Control Tool
           </CardTitle>
-          <p className="text-muted-foreground text-sm mt-1">Reset your password</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Reset your password
+          </p>
         </CardHeader>
         <CardContent>
           {sent ? (
@@ -48,9 +51,14 @@ const ForgotPassword = () => {
                 <Mail className="w-6 h-6 text-primary" />
               </div>
               <p className="text-sm text-muted-foreground">
-                We've sent a password reset link to <span className="font-medium text-foreground">{email}</span>. Check your inbox and follow the link to reset your password.
+                We've sent a password reset link to{" "}
+                <span className="font-medium text-foreground">{email}</span>.
+                Check your inbox and follow the link to reset your password.
               </p>
-              <Link to="/login" className="text-primary text-sm font-medium hover:underline flex items-center justify-center gap-1">
+              <Link
+                to="/login"
+                className="text-primary text-sm font-medium hover:underline flex items-center justify-center gap-1"
+              >
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </Link>
             </div>
@@ -69,9 +77,19 @@ const ForgotPassword = () => {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
               </Button>
-              <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 mt-2">
+              <Link
+                to="/login"
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 mt-2"
+              >
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </Link>
             </form>
