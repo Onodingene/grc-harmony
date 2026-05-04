@@ -39,6 +39,7 @@ export async function apiFetch<T = unknown>(
       ...(getAccessToken()
         ? { Authorization: `Bearer ${getAccessToken()}` }
         : {}),
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
