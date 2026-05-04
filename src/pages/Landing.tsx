@@ -56,7 +56,7 @@ const Landing = () => {
         <img 
           src={logo}
           alt="GRC Control Tool Logo" 
-          className="h-24 max-w-32"
+          className="h-24 max-w-40"
         />
       </div>
 
