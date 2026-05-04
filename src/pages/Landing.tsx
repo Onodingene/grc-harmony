@@ -52,13 +52,13 @@ const Landing = () => {
     <div className="flex items-center gap-10">
 
       {/* Logo */}
-      <div className="flex items-center">
-        <img 
-          src={logo}
-          alt="GRC Control Tool Logo" 
-          className="h-24 max-w-40"
-        />
-      </div>
+    <div className="flex items-center">
+  <img 
+    src={logo}
+    alt="GRC Control Tool Logo"
+    className="h-16 w-auto object-contain"
+  />
+</div>
 
       {/* Nav Links */}
       <div className="hidden md:flex gap-6 text-sm text-gray-500">
