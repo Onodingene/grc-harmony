@@ -31,7 +31,7 @@ import ResetPassword from "./pages/ResetPassword";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
-import { Navigate } from "react-router-dom";
+import Unauthorized from "./pages/Unauthorized";
 
 const queryClient = new QueryClient();
 
@@ -39,9 +39,6 @@ const AppRoutes = () => {
   const { setReady } = useAuthStore();
 
   useEffect(() => {
-    // Just mark the app as ready immediately — no refresh call on mount.
-    // The token lives in memory. If the user has no session they go to /login.
-    // The refresh call in apiFetch handles expired tokens mid-session automatically.
     setReady();
   }, []);
 
@@ -56,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/accept-invite" element={<AcceptInvite />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/demo" element={<Demo />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
       <Route element={<AppLayout />}>
         <Route
@@ -146,14 +144,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* <Route
-          path="/billing"
-          element={
-            <ProtectedRoute path="/billing">
-              <Billing />
-            </ProtectedRoute>
-          }
-        /> */}
         <Route
           path="/profile"
           element={

@@ -30,8 +30,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
 type IssueSeverity = "low" | "medium" | "high";
 type IssueStatus = "open" | "in_progress" | "closed";
 type RAG = "red" | "amber" | "green" | "grey";
@@ -63,7 +61,11 @@ interface Control {
   name: string;
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+}
 
 const BASE_URL =
   import.meta.env.VITE_API_URL?.replace("/api", "") ?? "http://localhost:5000";
@@ -87,8 +89,6 @@ const statusLabel: Record<IssueStatus, string> = {
   closed: "Closed",
 };
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 const Issues = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
@@ -97,39 +97,33 @@ const Issues = () => {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "open">("all");
 
-  // Dialogs
   const [addOpen, setAddOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
-  // Dropdown data
   const [companyMembers, setCompanyMembers] = useState<CompanyMember[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
 
-  // Add form
   const [form, setForm] = useState({
     controlId: "",
+    countryId: "",
     description: "",
     severity: "medium" as IssueSeverity,
     ownerId: "",
     dueDate: "",
   });
 
-  // Notes edit
   const [editNotes, setEditNotes] = useState("");
 
   // ── Load issues ──────────────────────────────────────────────────────────
 
   const loadIssues = () => {
-    if (!selectedCountry?.id) return;
     setLoading(true);
-    apiFetch<Issue[]>(
-      `/issues?country_id=${
-        selectedCountry ? selectedCountry.id : "all"
-      }&status=${statusFilter}`
-    )
+    const countryId = selectedCountry?.id ?? "all";
+    apiFetch<Issue[]>(`/issues?country_id=${countryId}&status=${statusFilter}`)
       .then((res) => {
         if (res.data) setIssues(res.data);
         if (res.error)
@@ -155,7 +149,23 @@ const Issues = () => {
     apiFetch<Control[]>("/settings/controls").then((res) => {
       if (res.data) setControls(res.data);
     });
+    apiFetch<Country[]>("/settings/countries").then((res) => {
+      if (res.data) setCountries(res.data);
+    });
   }, []);
+
+  // Pre-fill countryId when dialog opens
+  const openAddDialog = () => {
+    setForm({
+      controlId: "",
+      countryId: selectedCountry?.id ?? "",
+      description: "",
+      severity: "medium",
+      ownerId: "",
+      dueDate: "",
+    });
+    setAddOpen(true);
+  };
 
   // ── Status update ────────────────────────────────────────────────────────
 
@@ -169,7 +179,7 @@ const Issues = () => {
       return;
     }
     setIssues((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i))
+      prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i)),
     );
     setEditingStatusId(null);
   };
@@ -185,7 +195,7 @@ const Issues = () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
     if (uploadRes.error) {
       toast({
@@ -211,8 +221,8 @@ const Issues = () => {
     }
     setIssues((prev) =>
       prev.map((i) =>
-        i.id === id ? { ...i, evidenceUrl: uploadRes.data!.url } : i
-      )
+        i.id === id ? { ...i, evidenceUrl: uploadRes.data!.url } : i,
+      ),
     );
     toast({ title: "Evidence uploaded" });
   };
@@ -231,8 +241,8 @@ const Issues = () => {
     }
     setIssues((prev) =>
       prev.map((i) =>
-        i.id === selectedIssue.id ? { ...i, description: editNotes } : i
-      )
+        i.id === selectedIssue.id ? { ...i, description: editNotes } : i,
+      ),
     );
     toast({ title: "Notes updated" });
     setNotesOpen(false);
@@ -241,9 +251,17 @@ const Issues = () => {
   // ── Add manual issue ─────────────────────────────────────────────────────
 
   const saveNewIssue = async () => {
-    if (!form.controlId || !form.description || !selectedCountry?.id) return;
+    if (!form.controlId || !form.description || !form.countryId) {
+      toast({
+        title: "Missing fields",
+        description: "Please select a control, country and add a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const body: Record<string, any> = {
-      countryId: selectedCountry.id,
+      countryId: form.countryId,
       controlId: form.controlId,
       description: form.description,
       severity: form.severity,
@@ -255,25 +273,15 @@ const Issues = () => {
       method: "POST",
       body: JSON.stringify(body),
     });
+
     if (res.error) {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
     }
     if (res.data) setIssues((prev) => [res.data!, ...prev]);
     toast({ title: "Issue created" });
-    setForm({
-      controlId: "",
-      description: "",
-      severity: "medium",
-      ownerId: "",
-      dueDate: "",
-    });
     setAddOpen(false);
   };
-
-  // ── Delete issue ─────────────────────────────────────────────────────────
-  // Note: the backend does not expose a DELETE /issues endpoint per the docs.
-  // The delete button is kept for UI completeness but is disabled.
 
   // ── Export CSV ───────────────────────────────────────────────────────────
 
@@ -314,7 +322,6 @@ const Issues = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Issues</h1>
@@ -338,13 +345,12 @@ const Issues = () => {
           <Button variant="outline" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
-          <Button onClick={() => setAddOpen(true)}>
+          <Button onClick={openAddDialog}>
             <Plus className="w-4 h-4 mr-1" /> Log Manual Issue
           </Button>
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -384,16 +390,12 @@ const Issues = () => {
             )}
             {issues.map((i) => (
               <TableRow key={i.id}>
-                {/* RAG dot */}
                 <TableCell>
                   <span
-                    className={`inline-block w-3 h-3 rounded-full ${
-                      ragColors[i.rag]
-                    }`}
+                    className={`inline-block w-3 h-3 rounded-full ${ragColors[i.rag]}`}
                     title={i.rag}
                   />
                 </TableCell>
-
                 <TableCell className="font-semibold">{i.issueId}</TableCell>
                 <TableCell className="max-w-xs truncate">
                   {i.description}
@@ -401,8 +403,6 @@ const Issues = () => {
                 <TableCell className="font-mono">
                   {i.control?.controlId ?? "—"}
                 </TableCell>
-
-                {/* Severity */}
                 <TableCell>
                   <Badge
                     className={severityColors[i.severity]}
@@ -411,8 +411,6 @@ const Issues = () => {
                     {i.severity}
                   </Badge>
                 </TableCell>
-
-                {/* Status — click to edit */}
                 <TableCell>
                   {editingStatusId === i.id ? (
                     <Select
@@ -440,13 +438,10 @@ const Issues = () => {
                     </Badge>
                   )}
                 </TableCell>
-
                 <TableCell>{i.owner?.fullName ?? "—"}</TableCell>
                 <TableCell>
                   {i.dueDate ? new Date(i.dueDate).toLocaleDateString() : "—"}
                 </TableCell>
-
-                {/* Evidence */}
                 <TableCell>
                   {i.evidenceUrl ? (
                     <a
@@ -471,15 +466,13 @@ const Issues = () => {
                         onChange={(e) =>
                           handleEvidenceUpload(
                             i.id,
-                            e.target.files?.[0] || null
+                            e.target.files?.[0] || null,
                           )
                         }
                       />
                     </label>
                   )}
                 </TableCell>
-
-                {/* Actions */}
                 <TableCell className="text-right">
                   <Button
                     size="sm"
@@ -509,6 +502,24 @@ const Issues = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Country</label>
+              <Select
+                value={form.countryId}
+                onValueChange={(v) => setForm({ ...form, countryId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="text-sm font-medium">Control</label>
               <Select
@@ -588,7 +599,7 @@ const Issues = () => {
             </Button>
             <Button
               onClick={saveNewIssue}
-              disabled={!form.controlId || !form.description}
+              disabled={!form.controlId || !form.description || !form.countryId}
             >
               Create Issue
             </Button>
@@ -617,7 +628,7 @@ const Issues = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Dialog (kept for UX, backend has no delete endpoint) ── */}
+      {/* ── Delete Dialog ── */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>

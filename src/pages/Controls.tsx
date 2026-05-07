@@ -139,7 +139,7 @@ const Controls = () => {
         {
           method: "PUT",
           body: JSON.stringify(body),
-        }
+        },
       );
       if (res.error) {
         toast({
@@ -151,7 +151,7 @@ const Controls = () => {
       }
       if (res.data)
         setControls((prev) =>
-          prev.map((c) => (c.id === editingControl.id ? res.data! : c))
+          prev.map((c) => (c.id === editingControl.id ? res.data! : c)),
         );
       toast({ title: "Control updated" });
     } else {
@@ -375,7 +375,7 @@ const Controls = () => {
                   disabled={!!editingControl}
                 />
               </div>
-              
+
               <div className="grid gap-1.5">
                 <Label>Domain</Label>
                 <Select
@@ -568,6 +568,7 @@ const Controls = () => {
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Countries</SelectItem>
                     {countries.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}
