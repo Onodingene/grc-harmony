@@ -134,7 +134,7 @@ const SettingsPage = () => {
   const [editControlOpen, setEditControlOpen] = useState(false);
   const [deleteControlOpen, setDeleteControlOpen] = useState(false);
   const [selectedControl, setSelectedControl] = useState<MCSControl | null>(
-    null
+    null,
   );
   const [companyMembers, setCompanyMembers] = useState<CompanyMember[]>([]);
 
@@ -189,7 +189,7 @@ const SettingsPage = () => {
           setFyMonth(res.data.financialYearStart);
           setFYStartMonth(res.data.financialYearStart);
         }
-      }
+      },
     );
   }, []);
 
@@ -265,8 +265,8 @@ const SettingsPage = () => {
     }
     setMembers((prev) =>
       prev.map((m) =>
-        m.id === selectedMember.id ? { ...m, role: editRole } : m
-      )
+        m.id === selectedMember.id ? { ...m, role: editRole } : m,
+      ),
     );
     toast({
       title: "Role Updated",
@@ -348,7 +348,7 @@ const SettingsPage = () => {
           ownerId: selectedControl.ownerId || undefined,
           testerId: selectedControl.testerId || undefined,
         }),
-      }
+      },
     );
     if (res.error) {
       toast({ title: "Error", description: res.error, variant: "destructive" });
@@ -356,7 +356,7 @@ const SettingsPage = () => {
     }
     if (res.data)
       setControls((prev) =>
-        prev.map((c) => (c.id === selectedControl.id ? res.data! : c))
+        prev.map((c) => (c.id === selectedControl.id ? res.data! : c)),
       );
     toast({ title: "Control Updated" });
     setEditControlOpen(false);
@@ -404,7 +404,7 @@ const SettingsPage = () => {
     if (!selectedCountryToDelete) return;
     const res = await apiFetch(
       `/settings/countries/${selectedCountryToDelete.id}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
     if (res.error) {
       toast({ title: "Error", description: res.error, variant: "destructive" });
@@ -418,13 +418,13 @@ const SettingsPage = () => {
   const filteredMembers = members.filter(
     (m) =>
       m.fullName?.toLowerCase().includes(searchTeam.toLowerCase()) ||
-      m.email.toLowerCase().includes(searchTeam.toLowerCase())
+      m.email.toLowerCase().includes(searchTeam.toLowerCase()),
   );
 
   const filteredControls = controls.filter(
     (c) =>
       c.controlId.toLowerCase().includes(controlsSearch.toLowerCase()) ||
-      c.name.toLowerCase().includes(controlsSearch.toLowerCase())
+      c.name.toLowerCase().includes(controlsSearch.toLowerCase()),
   );
 
   return (
@@ -784,7 +784,7 @@ const SettingsPage = () => {
                       <SelectItem key={key} value={key}>
                         {roleConfig[key].label}
                       </SelectItem>
-                    )
+                    ),
                   )}
                 </SelectContent>
               </Select>
@@ -946,6 +946,7 @@ const SettingsPage = () => {
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}

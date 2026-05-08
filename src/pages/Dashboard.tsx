@@ -152,28 +152,30 @@ const Dashboard = () => {
   const testerStats = data
     ? [
         {
-          label: "Assigned Tests",
-          value: String(data.totalAssignedTests ?? 0),
-          icon: ClipboardList,
-          trend: `${data.currentPeriodTests ?? 0} this period`,
-        },
-        {
-          label: "Tests Passed",
-          value: `${data.passRate ?? 0}%`,
+          label: "Controls Tested",
+          value: String(data.currentPeriodTests ?? 0),
           icon: CheckCircle,
           trend: `${data.passCount ?? 0} passed / ${data.failCount ?? 0} failed`,
+        },
+        {
+          label: "Controls Untested",
+          value: String(
+            (data.totalAssignedTests ?? 0) - (data.currentPeriodTests ?? 0),
+          ),
+          icon: ClipboardList,
+          trend: `Out of ${data.totalAssignedTests ?? 0} assigned`,
+        },
+        {
+          label: "Total Assigned",
+          value: String(data.totalAssignedTests ?? 0),
+          icon: Shield,
+          trend: "Controls assigned to you",
         },
         {
           label: "Issues Raised",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
-        },
-        {
-          label: "Pending Actions",
-          value: String(data.pendingActionsCount ?? 0),
-          icon: Clock,
-          trend: `${data.overdueActionsCount ?? 0} overdue`,
         },
       ]
     : [];
