@@ -61,13 +61,13 @@ const allNavItems = [
     icon: AlertTriangle,
     roles: ["admin", "control_owner", "tester"],
   },
-  {
-    to: "/actions",
-    label: "Actions",
-    icon: Zap,
-    roles: ["admin", "control_owner", "tester"],
-  },
-  { to: "/audit", label: "Audit", icon: Search, roles: ["admin"] },
+  // {
+  //   to: "/actions",
+  //   label: "Actions",
+  //   icon: Zap,
+  //   roles: ["admin", "control_owner", "tester"],
+  // },
+  // { to: "/audit", label: "Audit", icon: Search, roles: ["admin"] },
   {
     to: "/calendar",
     label: "Calendar",
