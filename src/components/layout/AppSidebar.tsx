@@ -29,13 +29,13 @@ const allNavItems = [
     to: "/consolidated",
     label: "Consolidated",
     icon: Globe,
-    roles: ["admin", "viewer"],
+    roles: ["admin", "viewer", "tester"],
   },
   {
     to: "/controls",
     label: "Controls",
     icon: Shield,
-    roles: ["admin", "tester"],
+    roles: ["admin", "tester", "viewer"],
   },
   {
     to: "/test-plan",
@@ -53,7 +53,7 @@ const allNavItems = [
     to: "/monthly-report",
     label: "Monthly Report",
     icon: FileBarChart,
-    roles: ["admin", "control_owner", "viewer"],
+    roles: ["admin", "control_owner", "viewer", "tester"],
   },
   {
     to: "/issues",

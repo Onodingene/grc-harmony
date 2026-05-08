@@ -82,7 +82,8 @@ const Dashboard = () => {
     return `${Math.floor(diff / 86400)} days ago`;
   };
 
-  const role = user?.role;
+  const role = (data?.role ?? user?.role) as string | undefined;
+  console.log("user role:", user?.role, "| data role:", data?.role);
 
   // ── Stat sets per role ──────────────────────────────────────────────────
   const adminStats = data
