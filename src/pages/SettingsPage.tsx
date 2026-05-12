@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { Textarea } from "@/components/ui/textarea";
+import MemberCombobox from "@/components/MemberCombobox";
 
 type Role = "admin" | "control_owner" | "tester" | "viewer";
 
@@ -1031,43 +1032,26 @@ const SettingsPage = () => {
             </div>
             <div>
               <label className="text-sm font-medium">Owner</label>
-              <Select
+              <MemberCombobox
+                members={companyMembers}
                 value={newControl.ownerId}
                 onValueChange={(v) =>
                   setNewControl({ ...newControl, ownerId: v })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select owner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companyMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.fullName} — {m.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select owner"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Tester</label>
-              <Select
+              <MemberCombobox
+                members={companyMembers}
                 value={newControl.testerId}
                 onValueChange={(v) =>
                   setNewControl({ ...newControl, testerId: v })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companyMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.fullName} — {m.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select tester"
+                includeUnassigned
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Status</label>
@@ -1219,43 +1203,26 @@ const SettingsPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium">Owner</label>
-                <Select
+                <MemberCombobox
+                  members={companyMembers}
                   value={selectedControl.ownerId ?? ""}
                   onValueChange={(v) =>
                     setSelectedControl({ ...selectedControl, ownerId: v })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select owner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companyMembers.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.fullName} — {m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select owner"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Tester</label>
-                <Select
+                <MemberCombobox
+                  members={companyMembers}
                   value={selectedControl.testerId ?? ""}
                   onValueChange={(v) =>
                     setSelectedControl({ ...selectedControl, testerId: v })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companyMembers.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.fullName} — {m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select tester"
+                  includeUnassigned
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Status</label>

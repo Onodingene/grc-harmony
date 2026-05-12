@@ -4,8 +4,8 @@ import { useAuthStore } from "@/lib/authStore";
 const roleAccess: Record<string, string[]> = {
   "/dashboard": ["admin", "control_owner", "tester", "viewer"],
   "/consolidated": ["admin", "viewer", "tester"],
-  "/controls": ["admin", "tester"],
-  "/test-plan": ["admin", "control_owner", "tester"],
+  "/controls": ["admin", "tester", "control_owner"],
+  "/test-plan": ["admin", "tester"],
   "/testing": ["admin", "tester"],
   "/monthly-report": ["admin", "control_owner", "viewer", "tester"],
   "/issues": ["admin", "control_owner", "tester"],

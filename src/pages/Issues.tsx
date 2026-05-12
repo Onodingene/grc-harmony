@@ -29,6 +29,8 @@ import { Plus, Download, Image as ImageIcon, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
+import { useAuthStore } from "@/lib/authStore";
+import MemberCombobox from "@/components/MemberCombobox";
 
 type IssueSeverity = "low" | "medium" | "high";
 type IssueStatus = "open" | "in_progress" | "closed";
@@ -40,6 +42,7 @@ interface Issue {
   description: string;
   severity: IssueSeverity;
   status: IssueStatus;
+  testerClosed: boolean;
   dueDate: string | null;
   evidenceUrl: string | null;
   age: number;
@@ -54,13 +57,11 @@ interface CompanyMember {
   fullName: string;
   email: string;
 }
-
 interface Control {
   id: string;
   controlId: string;
   name: string;
 }
-
 interface Country {
   id: string;
   name: string;
@@ -83,30 +84,40 @@ const ragColors: Record<RAG, string> = {
   grey: "bg-gray-300",
 };
 
-const statusLabel: Record<IssueStatus, string> = {
-  open: "Open",
-  in_progress: "In Progress",
-  closed: "Closed",
+const statusLabel = (issue: Issue): string => {
+  if (issue.status === "closed") return "Closed";
+  if (issue.testerClosed) return "Pending Confirmation";
+  if (issue.status === "in_progress") return "In Progress";
+  return "Open";
+};
+
+const statusBadgeClass = (issue: Issue): string => {
+  if (issue.status === "closed")
+    return "bg-green-100 text-green-800 border-green-200";
+  if (issue.testerClosed)
+    return "bg-purple-100 text-purple-800 border-purple-200";
+  if (issue.status === "in_progress")
+    return "bg-blue-100 text-blue-800 border-blue-200";
+  return "bg-gray-100 text-gray-800 border-gray-200";
 };
 
 const Issues = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
+  const { user } = useAuthStore();
+  const role = user?.role;
 
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "open">("all");
-
   const [addOpen, setAddOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-
   const [companyMembers, setCompanyMembers] = useState<CompanyMember[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-
   const [form, setForm] = useState({
     controlId: "",
     countryId: "",
@@ -115,10 +126,7 @@ const Issues = () => {
     ownerId: "",
     dueDate: "",
   });
-
   const [editNotes, setEditNotes] = useState("");
-
-  // ── Load issues ──────────────────────────────────────────────────────────
 
   const loadIssues = () => {
     setLoading(true);
@@ -140,8 +148,6 @@ const Issues = () => {
     loadIssues();
   }, [selectedCountry?.id, statusFilter]);
 
-  // ── Load dropdowns ───────────────────────────────────────────────────────
-
   useEffect(() => {
     apiFetch<CompanyMember[]>("/company/members").then((res) => {
       if (res.data) setCompanyMembers(res.data);
@@ -154,7 +160,6 @@ const Issues = () => {
     });
   }, []);
 
-  // Pre-fill countryId when dialog opens
   const openAddDialog = () => {
     setForm({
       controlId: "",
@@ -167,8 +172,46 @@ const Issues = () => {
     setAddOpen(true);
   };
 
-  // ── Status update ────────────────────────────────────────────────────────
+  // Tester marks issue as tester-closed (pending confirmation)
+  const handleTesterClose = async (id: string) => {
+    const res = await apiFetch(`/issues/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ testerClosed: true }),
+    });
+    if (res.error) {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+      return;
+    }
+    setIssues((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, testerClosed: true } : i)),
+    );
+    setEditingStatusId(null);
+    toast({
+      title: "Issue marked for close",
+      description: "Awaiting control owner confirmation.",
+    });
+  };
 
+  // Control owner confirms close — fully closes the issue
+  const handleOwnerConfirmClose = async (id: string) => {
+    const res = await apiFetch(`/issues/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ status: "closed" }),
+    });
+    if (res.error) {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+      return;
+    }
+    setIssues((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: "closed" } : i)),
+    );
+    toast({
+      title: "Issue closed",
+      description: "The issue has been fully closed.",
+    });
+  };
+
+  // Generic status update for non-close transitions (open ↔ in_progress)
   const updateStatus = async (id: string, newStatus: IssueStatus) => {
     const res = await apiFetch(`/issues/${id}`, {
       method: "PUT",
@@ -184,18 +227,13 @@ const Issues = () => {
     setEditingStatusId(null);
   };
 
-  // ── Evidence upload ──────────────────────────────────────────────────────
-
   const handleEvidenceUpload = async (id: string, file: File | null) => {
     if (!file) return;
     const formData = new FormData();
     formData.append("issue_evidence", file);
     const uploadRes = await apiFetch<{ url: string }>(
       "/uploads/issue-evidence",
-      {
-        method: "POST",
-        body: formData,
-      },
+      { method: "POST", body: formData },
     );
     if (uploadRes.error) {
       toast({
@@ -206,7 +244,6 @@ const Issues = () => {
       return;
     }
     if (!uploadRes.data?.url) return;
-
     const updateRes = await apiFetch(`/issues/${id}`, {
       method: "PUT",
       body: JSON.stringify({ evidenceUrl: uploadRes.data.url }),
@@ -227,8 +264,6 @@ const Issues = () => {
     toast({ title: "Evidence uploaded" });
   };
 
-  // ── Notes update ─────────────────────────────────────────────────────────
-
   const handleSaveNotes = async () => {
     if (!selectedIssue) return;
     const res = await apiFetch(`/issues/${selectedIssue.id}`, {
@@ -248,18 +283,15 @@ const Issues = () => {
     setNotesOpen(false);
   };
 
-  // ── Add manual issue ─────────────────────────────────────────────────────
-
   const saveNewIssue = async () => {
     if (!form.controlId || !form.description || !form.countryId) {
       toast({
         title: "Missing fields",
-        description: "Please select a control, country and add a description.",
+        description: "Please select a control, entity and add a description.",
         variant: "destructive",
       });
       return;
     }
-
     const body: Record<string, any> = {
       countryId: form.countryId,
       controlId: form.controlId,
@@ -268,12 +300,10 @@ const Issues = () => {
     };
     if (form.ownerId) body.ownerId = form.ownerId;
     if (form.dueDate) body.dueDate = form.dueDate;
-
     const res = await apiFetch<Issue>("/issues", {
       method: "POST",
       body: JSON.stringify(body),
     });
-
     if (res.error) {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
@@ -282,8 +312,6 @@ const Issues = () => {
     toast({ title: "Issue created" });
     setAddOpen(false);
   };
-
-  // ── Export CSV ───────────────────────────────────────────────────────────
 
   const handleExportCSV = () => {
     const rows = [
@@ -318,7 +346,82 @@ const Issues = () => {
     URL.revokeObjectURL(url);
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  const renderStatusCell = (issue: Issue) => {
+    // Fully closed — nobody can change it
+    if (issue.status === "closed") {
+      return (
+        <Badge className={`border ${statusBadgeClass(issue)}`}>
+          {statusLabel(issue)}
+        </Badge>
+      );
+    }
+
+    // Tester has closed, waiting for owner to confirm
+    if (issue.testerClosed) {
+      return (
+        <div className="flex flex-col gap-1">
+          <Badge className={`border ${statusBadgeClass(issue)}`}>
+            Pending Confirmation
+          </Badge>
+          {(role === "control_owner" || role === "admin") && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs h-6 text-green-700 border-green-300 hover:bg-green-50"
+              onClick={() => handleOwnerConfirmClose(issue.id)}
+            >
+              Confirm Close
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    // Inline editing for open/in_progress transitions
+    if (editingStatusId === issue.id) {
+      return (
+        <Select
+          value={issue.status}
+          onValueChange={(v) => {
+            if (v === "closed" && role === "tester") {
+              // Tester can't directly set closed — use testerClosed flow
+              handleTesterClose(issue.id);
+            } else {
+              updateStatus(issue.id, v as IssueStatus);
+            }
+          }}
+          onOpenChange={(open) => {
+            if (!open) setEditingStatusId(null);
+          }}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            {role === "tester" && (
+              <SelectItem value="closed">Close Issue</SelectItem>
+            )}
+            {(role === "control_owner" || role === "admin") && (
+              <SelectItem value="closed">Close Issue</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    // Default: clickable badge to open status editor
+    return (
+      <Badge
+        variant="outline"
+        className={`cursor-pointer hover:bg-muted border ${statusBadgeClass(issue)}`}
+        onClick={() => setEditingStatusId(issue.id)}
+      >
+        {statusLabel(issue)}
+      </Badge>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -411,33 +514,7 @@ const Issues = () => {
                     {i.severity}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {editingStatusId === i.id ? (
-                    <Select
-                      value={i.status}
-                      onValueChange={(v) =>
-                        updateStatus(i.id, v as IssueStatus)
-                      }
-                    >
-                      <SelectTrigger className="w-36">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setEditingStatusId(i.id)}
-                    >
-                      {statusLabel[i.status]}
-                    </Badge>
-                  )}
-                </TableCell>
+                <TableCell>{renderStatusCell(i)}</TableCell>
                 <TableCell>{i.owner?.fullName ?? "—"}</TableCell>
                 <TableCell>
                   {i.dueDate ? new Date(i.dueDate).toLocaleDateString() : "—"}
@@ -492,7 +569,7 @@ const Issues = () => {
         </Table>
       </div>
 
-      {/* ── Add Manual Issue Dialog ── */}
+      {/* Add Issue Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -503,13 +580,13 @@ const Issues = () => {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium">Country</label>
+              <label className="text-sm font-medium">Entity</label>
               <Select
                 value={form.countryId}
                 onValueChange={(v) => setForm({ ...form, countryId: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder="Select entity" />
                 </SelectTrigger>
                 <SelectContent>
                   {countries.map((c) => (
@@ -568,21 +645,12 @@ const Issues = () => {
             </div>
             <div>
               <label className="text-sm font-medium">Owner</label>
-              <Select
+              <MemberCombobox
+                members={companyMembers}
                 value={form.ownerId}
                 onValueChange={(v) => setForm({ ...form, ownerId: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select owner (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companyMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.fullName} — {m.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select owner (optional)"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Due Date</label>
@@ -607,7 +675,7 @@ const Issues = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Edit Notes Dialog ── */}
+      {/* Edit Notes Dialog */}
       <Dialog open={notesOpen} onOpenChange={setNotesOpen}>
         <DialogContent>
           <DialogHeader>
@@ -628,7 +696,7 @@ const Issues = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Dialog ── */}
+      {/* Delete Dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
