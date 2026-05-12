@@ -30,6 +30,7 @@ import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import MemberCombobox from "@/components/MemberCombobox";
 
 interface Control {
   id: string;
@@ -130,16 +131,14 @@ const Controls = () => {
     const body = {
       ...form,
       ownerId: form.ownerId || undefined,
-      testerId: form.testerId || undefined,
+      testerId:
+        form.testerId === "unassigned" ? undefined : form.testerId || undefined,
     };
 
     if (editingControl) {
       const res = await apiFetch<Control>(
         `/settings/controls/${editingControl.id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(body),
-        },
+        { method: "PUT", body: JSON.stringify(body) },
       );
       if (res.error) {
         toast({
@@ -214,7 +213,8 @@ const Controls = () => {
     const matchDomain =
       domainFilter === "all" ||
       c.domain.toLowerCase().includes(domainFilter.toLowerCase());
-    return matchSearch && matchDomain;
+    const matchEntity = !selectedCountry || c.countryId === selectedCountry.id;
+    return matchSearch && matchDomain && matchEntity;
   });
 
   return (
@@ -279,7 +279,7 @@ const Controls = () => {
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={12}
                   className="text-center py-8 text-muted-foreground"
                 >
                   Loading...
@@ -288,7 +288,7 @@ const Controls = () => {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={12}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No controls found
@@ -375,7 +375,6 @@ const Controls = () => {
                   disabled={!!editingControl}
                 />
               </div>
-
               <div className="grid gap-1.5">
                 <Label>Domain</Label>
                 <Select
@@ -407,6 +406,7 @@ const Controls = () => {
                 </Select>
               </div>
             </div>
+
             <div className="grid gap-1.5">
               <Label>Control Name</Label>
               <Input
@@ -414,6 +414,7 @@ const Controls = () => {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Control Description</Label>
               <Textarea
@@ -423,6 +424,7 @@ const Controls = () => {
                 }
               />
             </div>
+
             <div className="grid gap-1.5">
               <Label>Risk</Label>
               <Input
@@ -430,47 +432,29 @@ const Controls = () => {
                 onChange={(e) => setForm({ ...form, risk: e.target.value })}
               />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
                 <Label>Owner</Label>
-                <Select
+                <MemberCombobox
+                  members={members}
                   value={form.ownerId}
                   onValueChange={(v) => setForm({ ...form, ownerId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select owner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.fullName} — {m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select owner"
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>Tester</Label>
-                <Select
-                  value={form.testerId || "unassigned"}
-                  onValueChange={(v) =>
-                    setForm({ ...form, testerId: v === "unassigned" ? "" : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.fullName} — {m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MemberCombobox
+                  members={members}
+                  value={form.testerId}
+                  onValueChange={(v) => setForm({ ...form, testerId: v })}
+                  placeholder="Select tester"
+                  includeUnassigned
+                />
               </div>
             </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-1.5">
                 <Label>Status</Label>
@@ -521,6 +505,7 @@ const Controls = () => {
                 </Select>
               </div>
             </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-1.5">
                 <Label>Frequency</Label>
@@ -540,7 +525,6 @@ const Controls = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="grid gap-1.5">
                 <Label>Test Due Day</Label>
                 <Input
@@ -557,18 +541,17 @@ const Controls = () => {
                   }
                 />
               </div>
-
               <div className="grid gap-1.5">
-                <Label>Country</Label>
+                <Label>Entity</Label>
                 <Select
                   value={form.countryId}
                   onValueChange={(v) => setForm({ ...form, countryId: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
+                    <SelectValue placeholder="Select entity" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
+                    <SelectItem value="all">All Entities</SelectItem>
                     {countries.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}

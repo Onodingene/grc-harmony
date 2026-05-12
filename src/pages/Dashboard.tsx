@@ -41,6 +41,8 @@ interface DashboardData {
   // Tester
   totalAssignedTests?: number;
   currentPeriodTests?: number;
+  closedIssuesCount?: number;
+  pendingConfirmationCount?: number;
   // Viewer (subset of above)
   totalTested?: number;
   recentActivity?: {
@@ -173,10 +175,22 @@ const Dashboard = () => {
           trend: "Controls assigned to you",
         },
         {
-          label: "Issues Raised",
+          label: "Open Issues",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
+        },
+        {
+          label: "Pending Confirmation",
+          value: String(data.pendingConfirmationCount ?? 0),
+          icon: Clock,
+          trend: "Awaiting owner confirmation",
+        },
+        {
+          label: "Closed Issues",
+          value: String(data.closedIssuesCount ?? 0),
+          icon: CheckCircle,
+          trend: "Issues resolved",
         },
       ]
     : [];
@@ -226,7 +240,7 @@ const Dashboard = () => {
   const colsMap: Record<string, string> = {
     admin: "lg:grid-cols-3",
     control_owner: "lg:grid-cols-4",
-    tester: "lg:grid-cols-4",
+    tester: "lg:grid-cols-3",
     viewer: "lg:grid-cols-3",
   };
   const cols = role ? (colsMap[role] ?? "lg:grid-cols-3") : "lg:grid-cols-3";
