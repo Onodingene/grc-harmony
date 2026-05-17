@@ -251,9 +251,9 @@ const Controls = () => {
           <Button variant="outline" onClick={exportCSV}>
             <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
-          <Button onClick={openAdd}>
+          {/* <Button onClick={openAdd}>
             <Plus className="w-4 h-4 mr-1" /> Add New Control
-          </Button>
+          </Button> */}
         </div>
       </div>
 

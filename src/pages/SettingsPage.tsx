@@ -339,11 +339,14 @@ const SettingsPage = () => {
       {
         method: "PUT",
         body: JSON.stringify({
+          controlId: selectedControl.controlId,
           name: selectedControl.name,
           domain: selectedControl.domain,
           description: selectedControl.description,
           testDueDay: selectedControl.testDueDay || 15,
           risk: selectedControl.risk,
+          nature: selectedControl.nature,        
+          type: selectedControl.type,          
           frequency: selectedControl.frequency,
           status: selectedControl.status,
           ownerId: selectedControl.ownerId || undefined,
@@ -1092,6 +1095,13 @@ const SettingsPage = () => {
           {selectedControl && (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               <div>
+                 <label className="text-sm font-medium">Control ID</label>
+                 <Input value={selectedControl.controlId}
+                     onChange={(e) =>
+                      setSelectedControl({ ...selectedControl, controlId: e.target.value })
+                      }/>
+              </div>
+              <div>
                 <label className="text-sm font-medium">Name</label>
                 <Input
                   value={selectedControl.name}
@@ -1103,6 +1113,21 @@ const SettingsPage = () => {
                   }
                 />
               </div>
+              <div>
+  <label className="text-sm font-medium">Nature</label>
+  <Select
+    value={selectedControl.nature}
+    onValueChange={(v) =>
+      setSelectedControl({ ...selectedControl, nature: v })
+    }
+  >
+    <SelectTrigger><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value="manual">Manual</SelectItem>
+      <SelectItem value="automated">Automated</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
               <div>
                 <label className="text-sm font-medium">Description</label>
                 <Textarea

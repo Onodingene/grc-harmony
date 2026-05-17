@@ -41,7 +41,7 @@ const allNavItems = [
     to: "/test-plan",
     label: "Test Plan",
     icon: ListChecks,
-    roles: ["admin", "control_owner", "tester"],
+    roles: ["admin", "tester"],
   },
   {
     to: "/testing",
