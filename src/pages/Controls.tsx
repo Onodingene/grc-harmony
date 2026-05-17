@@ -206,16 +206,23 @@ const Controls = () => {
     a.click();
   };
 
-  const filtered = controls.filter((c) => {
-    const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.controlId.toLowerCase().includes(search.toLowerCase());
-    const matchDomain =
-      domainFilter === "all" ||
-      c.domain.toLowerCase().includes(domainFilter.toLowerCase());
-    const matchEntity = !selectedCountry || c.countryId === selectedCountry.id;
-    return matchSearch && matchDomain && matchEntity;
-  });
+
+        const filtered = controls.filter((c) => {
+        const matchSearch =
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          c.controlId.toLowerCase().includes(search.toLowerCase());
+
+        const matchDomain =
+          domainFilter === "all" ||
+          c.domain.toLowerCase() === domainFilter.toLowerCase(); // ← exact match, not includes
+
+        const matchEntity = !selectedCountry ||
+          c.countryId === selectedCountry.id ||
+          c.countryId === "all"; // ← controls marked "all" appear for every country
+
+        return matchSearch && matchDomain && matchEntity;
+      });
+
 
   return (
     <div className="space-y-6">
