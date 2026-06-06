@@ -74,7 +74,7 @@ const allNavItems = [
     icon: CalendarDays,
     roles: ["admin", "control_owner", "tester"],
   },
-  { to: "/settings", label: "Settings", icon: Settings, roles: ["admin"] },
+  { to: "/settings", label: "Settings", icon: Settings, roles: ["admin", "tester"] },
 ];
 
 const AppSidebar = () => {

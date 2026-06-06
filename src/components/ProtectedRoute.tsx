@@ -12,7 +12,7 @@ const roleAccess: Record<string, string[]> = {
   "/actions": ["admin", "control_owner", "tester"],
   "/audit": ["admin"],
   "/calendar": ["admin", "control_owner", "tester"],
-  "/settings": ["admin"],
+  "/settings": ["admin","tester"],
   "/billing": ["admin"],
   "/profile": ["admin", "control_owner", "tester", "viewer"],
 };
