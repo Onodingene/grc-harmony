@@ -84,6 +84,8 @@ const Controls = () => {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [domainFilter, setDomainFilter] = useState("all");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [controlToDelete, setControlToDelete] = useState<Control | null>(null);
 
   useEffect(() => {
     apiFetch<CompanyMember[]>("/company/members").then((r) => {
@@ -172,17 +174,21 @@ const Controls = () => {
     setOpen(false);
   };
 
-  const remove = async (c: Control) => {
-    const res = await apiFetch(`/settings/controls/${c.id}`, {
+
+    const remove = async () => {
+    if (!controlToDelete) return;
+    const res = await apiFetch(`/settings/controls/${controlToDelete.id}`, {
       method: "DELETE",
     });
     if (res.error) {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
     }
-    setControls((prev) => prev.filter((x) => x.id !== c.id));
+    setControls((prev) => prev.filter((x) => x.id !== controlToDelete.id));
     toast({ title: "Control deleted" });
+    setDeleteOpen(false);
   };
+
 
   const exportCSV = () => {
     const rows = filtered.map((c) => ({
@@ -245,7 +251,7 @@ const Controls = () => {
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-48 overflow-y-auto">
               <SelectItem value="all">All Domains</SelectItem>
               <SelectItem value="governance">
                 Governance & Compliance
@@ -270,7 +276,7 @@ const Controls = () => {
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
               <TableHead>Control Name</TableHead>
-              <TableHead>Control Description</TableHead>
+              <TableHead className="min-w-[200px]">Control Description</TableHead>
               <TableHead>Key Area</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Tester</TableHead>
@@ -306,7 +312,7 @@ const Controls = () => {
                 <TableRow key={c.id}>
                   <TableCell className="font-semibold">{c.controlId}</TableCell>
                   <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.description}</TableCell>
+                  <TableCell className="max-w-xs min-w-[200px] whitespace-normal break-words">{c.description}</TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
                       {c.domain}
@@ -350,7 +356,7 @@ const Controls = () => {
                         size="sm"
                         variant="destructive"
                         className="h-7 text-xs"
-                        onClick={() => remove(c)}
+                        onClick={() => { setControlToDelete(c); setDeleteOpen(true); }}
                       >
                         <Trash2 className="w-3 h-3 mr-1" /> Delete
                       </Button>
@@ -362,6 +368,21 @@ const Controls = () => {
           </TableBody>
         </Table>
       </div>
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Delete Control</DialogTitle>
+    </DialogHeader>
+    <p className="text-sm text-muted-foreground">
+      Delete <span className="font-medium">{controlToDelete?.controlId} — {controlToDelete?.name}</span>? This cannot be undone.
+    </p>
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+      <Button variant="destructive" onClick={remove}>Delete</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+  
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -391,7 +412,7 @@ const Controls = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select domain" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-48 overflow-y-auto">
                     <SelectItem value="Fixed Asset">Fixed Asset</SelectItem>
                     <SelectItem value="HR">HR</SelectItem>
                     <SelectItem value="Revenue">Revenue</SelectItem>
@@ -407,6 +428,9 @@ const Controls = () => {
                     <SelectItem value="Treasury">Treasury</SelectItem>
                     <SelectItem value="Sustainability">
                       Sustainability
+                    </SelectItem>
+                    <SelectItem value="Expenditure">
+                      Expenditure
                     </SelectItem>
                     <SelectItem value="Operations">Operations</SelectItem>
                   </SelectContent>

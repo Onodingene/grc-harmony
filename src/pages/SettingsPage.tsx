@@ -332,6 +332,7 @@ const SettingsPage = () => {
     setAddControlOpen(false);
   };
 
+  
   const handleEditControl = async () => {
     if (!selectedControl) return;
     const res = await apiFetch<MCSControl>(
@@ -358,10 +359,18 @@ const SettingsPage = () => {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
     }
-    if (res.data)
-      setControls((prev) =>
-        prev.map((c) => (c.id === selectedControl.id ? res.data! : c)),
-      );
+
+    setControls((prev) =>
+      prev.map((c) =>
+        c.id === selectedControl.id
+          ? { ...selectedControl, ...(res.data ?? {}) }
+          : c,
+      ),
+    );
+    // if (res.data)
+    //   setControls((prev) =>
+    //     prev.map((c) => (c.id === selectedControl.id ? res.data! : c)),
+    //   );
     toast({ title: "Control Updated" });
     setEditControlOpen(false);
   };
@@ -925,6 +934,7 @@ const SettingsPage = () => {
                   <SelectItem value="Treasury">Treasury</SelectItem>
                   <SelectItem value="Sustainability">Sustainability</SelectItem>
                   <SelectItem value="Operations">Operations</SelectItem>
+                  <SelectItem value="Expenditure">Expenditure</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1167,6 +1177,9 @@ const SettingsPage = () => {
                     <SelectItem value="Treasury">Treasury</SelectItem>
                     <SelectItem value="Sustainability">
                       Sustainability
+                    </SelectItem>
+                    <SelectItem value="Expenditure">
+                      Expenditure
                     </SelectItem>
                     <SelectItem value="Operations">Operations</SelectItem>
                   </SelectContent>
