@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus, Eye } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ interface TestResult {
   exceptions: number;
   result: "pass" | "exception" | "fail";
   evidenceUrl: string | null;
+  evidenceUrls: string[] | null;
   testProcedure: string | null;
   comments: string | null;
   testedAt: string;
@@ -91,6 +92,7 @@ const emptyForm = {
   result: "pass" as "pass" | "exception" | "fail",
   testProcedure: "",
   comments: "",
+  recommendation: "",
 };
 
 const Testing = () => {
@@ -106,10 +108,8 @@ const Testing = () => {
   >([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [selectedControlId, setSelectedControlId] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -168,7 +168,7 @@ const Testing = () => {
       period: currentMonth,
     });
 
-    setEvidenceFile(null);
+    setEvidenceFiles([]);
 
     const res = await apiFetch<AvailableControl[]>(
       `/testing/available?country_id=${
@@ -196,22 +196,25 @@ const Testing = () => {
 
     setSaving(true);
 
-    let evidenceUrl = "";
+    let evidenceUrls: string[] = [];
 
-    if (evidenceFile) {
+    if (evidenceFiles.length > 0) {
       setUploading(true);
 
       const fd = new FormData();
-      fd.append("test_evidence", evidenceFile);
+      evidenceFiles.forEach((file) => fd.append("test_evidence", file));
 
       const token = getAccessToken();
 
       const uploadRes = await fetch(
-        `${import.meta.env.VITE_API_URL}/uploads/test-evidence`,
+        `${import.meta.env.VITE_API_URL}/uploads/test-evidence-multiple`,
         {
           method: "POST",
           credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "ngrok-skip-browser-warning": "true",
+          },
           body: fd,
         }
       );
@@ -232,14 +235,16 @@ const Testing = () => {
         return;
       }
 
-      evidenceUrl = uploadData.data.url;
+      evidenceUrls = (uploadData.data ?? []).map(
+        (f: { url: string }) => f.url
+      );
     }
 
     const res = await apiFetch<TestResult>("/testing/log", {
       method: "POST",
       body: JSON.stringify({
         ...form,
-        evidenceUrl: evidenceUrl || undefined,
+        evidenceUrls,
       }),
     });
 
@@ -273,15 +278,6 @@ const Testing = () => {
 
     setOpen(false);
   };
-
-  const viewHistory = (controlId: string) => {
-    setSelectedControlId(controlId);
-    setHistoryOpen(true);
-  };
-
-  const historyTests = tests.filter(
-    (t) => t.control?.controlId === selectedControlId
-  );
 
   const exportCSV = () => {
     if (!tests.length) return;
@@ -361,7 +357,7 @@ const Testing = () => {
               <TableHead>Period</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Result</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Evidence</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -392,14 +388,41 @@ const Testing = () => {
                     <Badge className={statusColors[t.result]}>{t.result}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => viewHistory(t.control?.controlId)}
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      History
-                    </Button>
+                    {(() => {
+                      const urls =
+                        t.evidenceUrls && t.evidenceUrls.length > 0
+                          ? t.evidenceUrls
+                          : t.evidenceUrl
+                          ? [t.evidenceUrl]
+                          : [];
+
+                      if (urls.length === 0) {
+                        return (
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
+                        );
+                      }
+
+                      const apiBase = (
+                        import.meta.env.VITE_API_URL ?? ""
+                      ).replace(/\/api\/?$/, "");
+                      return (
+                        <div className="flex flex-col gap-1">
+                          {urls.map((url, i) => (
+                            <a
+                              key={url}
+                              href={`${apiBase}${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary underline"
+                            >
+                              File {i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))
@@ -580,21 +603,36 @@ const Testing = () => {
             </div>
 
             <div className="col-span-2 grid gap-1.5">
-              <Label>Evidence File (optional)</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
-                  onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)}
-                />
-                {evidenceFile && (
-                  <span className="text-xs text-muted-foreground">
-                    {evidenceFile.name}
-                  </span>
-                )}
-              </div>
+              <Label>Recommendations</Label>
+              <Textarea
+                value={form.recommendation}
+                onChange={(e) =>
+                  setForm({ ...form, recommendation: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="col-span-2 grid gap-1.5">
+              <Label>Evidence Files (optional)</Label>
+              <Input
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
+                onChange={(e) =>
+                  setEvidenceFiles(
+                    e.target.files ? Array.from(e.target.files) : []
+                  )
+                }
+              />
+              {evidenceFiles.length > 0 && (
+                <ul className="text-xs text-muted-foreground list-disc pl-4">
+                  {evidenceFiles.map((file) => (
+                    <li key={file.name}>{file.name}</li>
+                  ))}
+                </ul>
+              )}
               <p className="text-xs text-muted-foreground">
-                PDF, JPEG, PNG, WebP, XLSX, CSV — max 10MB
+                PDF, JPEG, PNG, WebP, XLSX, CSV — max 10MB each
               </p>
             </div>
 

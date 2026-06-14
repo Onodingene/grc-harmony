@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -62,6 +63,8 @@ const TestPlan = () => {
   const [monthFilter, setMonthFilter] = useState(
     new Date().toISOString().slice(0, 7)
   );
+  const [search, setSearch] = useState("");
+  const [personFilter, setPersonFilter] = useState("all");
 
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date();
@@ -73,6 +76,34 @@ const TestPlan = () => {
       key: i,
     };
   });
+
+  const personEmails = useMemo(() => {
+    const set = new Set<string>();
+    data.forEach((r) => {
+      if (r.owner?.email) set.add(r.owner.email);
+      if (r.assignedTester?.email) set.add(r.assignedTester.email);
+    });
+    return Array.from(set).sort();
+  }, [data]);
+
+  const filteredData = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const rows = data.filter((r) => {
+      const matchesSearch =
+        q === "" ||
+        r.controlId.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q);
+      const matchesPerson =
+        personFilter === "all" ||
+        r.owner?.email === personFilter ||
+        r.assignedTester?.email === personFilter;
+      return matchesSearch && matchesPerson;
+    });
+    // Backend already returns rows sorted ascending by dueDate; preserve that order.
+    return rows
+      .slice()
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  }, [data, search, personFilter]);
 
   useEffect(() => {
     // if (!selectedCountry) return;
@@ -122,7 +153,26 @@ const TestPlan = () => {
         <h1 className="text-xl font-bold">
           Monthly Test Plan — {selectedCountry?.name ?? "All Countries"}
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Input
+            placeholder="Search by control ID or name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-56"
+          />
+          <Select value={personFilter} onValueChange={setPersonFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filter by person" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {personEmails.map((email) => (
+                <SelectItem key={email} value={email}>
+                  {email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={monthFilter} onValueChange={setMonthFilter}>
             <SelectTrigger className="w-48">
               <SelectValue />
@@ -186,7 +236,7 @@ const TestPlan = () => {
                   Loading test plan...
                 </TableCell>
               </TableRow>
-            ) : data.length === 0 ? (
+            ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={10}
@@ -196,7 +246,7 @@ const TestPlan = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((row) => (
+              filteredData.map((row) => (
                 <TableRow key={row.id} className="hover:bg-muted/50">
                   <TableCell className="font-bold text-primary">
                     {row.controlId}
