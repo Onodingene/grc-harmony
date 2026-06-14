@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Shield,
@@ -7,6 +8,7 @@ import {
   Clock,
   Users,
   ClipboardList,
+  XCircle,
 } from "lucide-react";
 import {
   Table,
@@ -57,6 +59,7 @@ interface DashboardData {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { selectedCountry } = useCountryStore();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -85,7 +88,6 @@ const Dashboard = () => {
   };
 
   const role = (data?.role ?? user?.role) as string | undefined;
-  console.log("user role:", user?.role, "| data role:", data?.role);
 
   // ── Stat sets per role ──────────────────────────────────────────────────
   const adminStats = data
@@ -95,30 +97,42 @@ const Dashboard = () => {
           value: String(data.totalControls ?? 0),
           icon: Shield,
           trend: `${data.controlsDueThisMonth ?? 0} due this month`,
+          link: "/controls",
         },
         {
           label: "Open Issues",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
+          link: "/issues",
         },
         {
           label: "Tests Passed",
           value: `${data.passRate ?? 0}%`,
           icon: CheckCircle,
           trend: `${data.passCount ?? 0} passed this period`,
+          link: "/testing",
+        },
+        {
+          label: "Exceptions",
+          value: String(data.exceptionCount ?? 0),
+          icon: XCircle,
+          trend: `${data.failCount ?? 0} failed this period`,
+          link: "/testing",
         },
         {
           label: "Pending Actions",
           value: String(data.pendingActionsCount ?? 0),
           icon: Clock,
           trend: `${data.overdueActionsCount ?? 0} overdue`,
+          link: "/actions",
         },
         {
           label: "Active Users",
           value: String(data.activeUsersCount ?? 0),
           icon: Users,
           trend: `${data.controlOwnersCount ?? 0} control owners`,
+          link: "/settings",
         },
       ]
     : [];
@@ -130,24 +144,35 @@ const Dashboard = () => {
           value: String(data.controlsDueThisMonth ?? 0),
           icon: Shield,
           trend: `${data.overdueCount ?? 0} overdue`,
+          link: "/controls",
         },
         {
           label: "My Open Issues",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
+          link: "/issues",
         },
         {
           label: "Pass Rate",
           value: `${data.passRate ?? 0}%`,
           icon: CheckCircle,
-          trend: "This period",
+          trend: `${data.passCount ?? 0} passed this period`,
+          link: "/testing",
+        },
+        {
+          label: "Exceptions",
+          value: String(data.exceptionCount ?? 0),
+          icon: XCircle,
+          trend: `${data.failCount ?? 0} failed this period`,
+          link: "/testing",
         },
         {
           label: "Pending Actions",
           value: String(data.pendingActionsCount ?? 0),
           icon: Clock,
           trend: `${data.overdueActionsCount ?? 0} overdue`,
+          link: "/actions",
         },
       ]
     : [];
@@ -159,6 +184,14 @@ const Dashboard = () => {
           value: String(data.currentPeriodTests ?? 0),
           icon: CheckCircle,
           trend: `${data.passCount ?? 0} passed / ${data.failCount ?? 0} failed`,
+          link: "/testing",
+        },
+        {
+          label: "Exceptions",
+          value: String(data.exceptionCount ?? 0),
+          icon: XCircle,
+          trend: `${data.failCount ?? 0} failed this period`,
+          link: "/testing",
         },
         {
           label: "Controls Untested",
@@ -167,30 +200,35 @@ const Dashboard = () => {
           ),
           icon: ClipboardList,
           trend: `Out of ${data.totalAssignedTests ?? 0} assigned`,
+          link: "/test-plan",
         },
         {
           label: "Total Assigned",
           value: String(data.totalAssignedTests ?? 0),
           icon: Shield,
           trend: "Controls assigned to you",
+          link: "/test-plan",
         },
         {
           label: "Open Issues",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
+          link: "/issues",
         },
         {
           label: "Pending Confirmation",
           value: String(data.pendingConfirmationCount ?? 0),
           icon: Clock,
           trend: "Awaiting owner confirmation",
+          link: "/issues",
         },
         {
           label: "Closed Issues",
           value: String(data.closedIssuesCount ?? 0),
           icon: CheckCircle,
           trend: "Issues resolved",
+          link: "/issues",
         },
       ]
     : [];
@@ -202,18 +240,28 @@ const Dashboard = () => {
           value: String(data.totalControls ?? 0),
           icon: Shield,
           trend: "Company-wide",
+          link: "/controls",
         },
         {
           label: "Pass Rate",
           value: `${data.passRate ?? 0}%`,
           icon: CheckCircle,
           trend: `${data.passCount ?? 0} of ${data.totalTested ?? 0} tests passed`,
+          link: "/testing",
+        },
+        {
+          label: "Exceptions",
+          value: String(data.exceptionCount ?? 0),
+          icon: XCircle,
+          trend: `${data.failCount ?? 0} failed this period`,
+          link: "/testing",
         },
         {
           label: "Open Issues",
           value: String(data.openIssuesCount ?? 0),
           icon: AlertTriangle,
           trend: `${data.criticalIssuesCount ?? 0} critical`,
+          link: "/issues",
         },
       ]
     : [];
@@ -241,7 +289,7 @@ const Dashboard = () => {
     admin: "lg:grid-cols-3",
     control_owner: "lg:grid-cols-4",
     tester: "lg:grid-cols-3",
-    viewer: "lg:grid-cols-3",
+    viewer: "lg:grid-cols-4",
   };
   const cols = role ? (colsMap[role] ?? "lg:grid-cols-3") : "lg:grid-cols-3";
 
@@ -271,7 +319,19 @@ const Dashboard = () => {
 
       <div className={`grid grid-cols-1 md:grid-cols-2 ${cols} gap-4`}>
         {stats.map((s) => (
-          <Card key={s.label} className="shadow-sm">
+          <Card
+            key={s.label}
+            onClick={() => navigate(s.link)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(s.link);
+              }
+            }}
+            className="shadow-sm cursor-pointer transition-colors hover:bg-accent/50 hover:shadow-md"
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {s.label}
@@ -304,7 +364,11 @@ const Dashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {data.recentActivity.map((a) => (
-                    <TableRow key={a.id}>
+                    <TableRow
+                      key={a.id}
+                      onClick={() => navigate("/audit")}
+                      className="cursor-pointer hover:bg-accent/50"
+                    >
                       <TableCell className="font-medium">{a.action}</TableCell>
                       <TableCell>{a.detail}</TableCell>
                       <TableCell>{a.user.fullName}</TableCell>

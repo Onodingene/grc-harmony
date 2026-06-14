@@ -44,6 +44,7 @@ interface Control {
   nature: string;
   type: string;
   testDueDay: number;
+  testDueDate?: string | null;
   countryId: string;
   ownerId: string | null;
   testerId: string | null;
@@ -68,6 +69,7 @@ const emptyForm = {
   type: "preventive",
   status: "active" as "active" | "inactive",
   testDueDay: 15,
+  testDueDate: "",
   countryId: "",
   ownerId: "",
   testerId: "",
@@ -119,6 +121,7 @@ const Controls = () => {
       type: c.type,
       status: c.status,
       testDueDay: c.testDueDay,
+      testDueDate: c.testDueDate ? c.testDueDate.slice(0, 10) : "",
       countryId: c.countryId,
       ownerId: c.ownerId ?? "",
       testerId: c.testerId ?? "",
@@ -132,6 +135,7 @@ const Controls = () => {
     if (!form.name || !form.controlId) return;
     const body = {
       ...form,
+      testDueDate: form.testDueDate || null,
       ownerId: form.ownerId || undefined,
       testerId:
         form.testerId === "unassigned" ? undefined : form.testerId || undefined,
@@ -213,6 +217,12 @@ const Controls = () => {
   };
 
 
+        // Build the domain filter options from the domains actually present,
+        // so option values always match the stored control.domain values.
+        const domainOptions = [
+          ...new Set(controls.map((c) => c.domain).filter(Boolean)),
+        ].sort((a, b) => a.localeCompare(b));
+
         const filtered = controls.filter((c) => {
         const matchSearch =
           c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -253,12 +263,11 @@ const Controls = () => {
             </SelectTrigger>
             <SelectContent className="max-h-48 overflow-y-auto">
               <SelectItem value="all">All Domains</SelectItem>
-              <SelectItem value="governance">
-                Governance & Compliance
-              </SelectItem>
-              <SelectItem value="finance">Finance & Reporting</SelectItem>
-              <SelectItem value="procurement">Procurement & AP</SelectItem>
-              <SelectItem value="inventory">Inventory</SelectItem>
+              {domainOptions.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={exportCSV}>
@@ -557,18 +566,12 @@ const Controls = () => {
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Test Due Day</Label>
+                <Label>Test Due Date</Label>
                 <Input
-                  type="number"
-                  min={1}
-                  max={31}
-                  placeholder="Optional"
-                  value={form.testDueDay || ""}
+                  type="date"
+                  value={form.testDueDate ?? ""}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      testDueDay: e.target.value ? Number(e.target.value) : 15,
-                    })
+                    setForm({ ...form, testDueDate: e.target.value })
                   }
                 />
               </div>

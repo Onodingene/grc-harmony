@@ -71,6 +71,7 @@ interface MCSControl {
   type: string;
   status: "active" | "inactive";
   testDueDay: number;
+  testDueDate?: string | null;
   countryId: string;
   ownerId: string | null;
   testerId: string | null;
@@ -150,6 +151,7 @@ const SettingsPage = () => {
     type: "preventive",
     status: "active" as "active" | "inactive",
     testDueDay: 15,
+    testDueDate: "",
     countryId: "",
     ownerId: "",
     testerId: "",
@@ -301,6 +303,7 @@ const SettingsPage = () => {
       method: "POST",
       body: JSON.stringify({
         ...newControl,
+        testDueDate: newControl.testDueDate || null,
         ownerId: newControl.ownerId || undefined,
         testerId: newControl.testerId || undefined,
       }),
@@ -325,6 +328,7 @@ const SettingsPage = () => {
       type: "preventive",
       status: "active",
       testDueDay: 15,
+      testDueDate: "",
       countryId: "",
       ownerId: "",
       testerId: "",
@@ -344,7 +348,8 @@ const SettingsPage = () => {
           name: selectedControl.name,
           domain: selectedControl.domain,
           description: selectedControl.description,
-          testDueDay: selectedControl.testDueDay || 15,
+          testDueDay: selectedControl.testDueDay ?? 15,
+          testDueDate: selectedControl.testDueDate || null,
           risk: selectedControl.risk,
           nature: selectedControl.nature,        
           type: selectedControl.type,          
@@ -991,24 +996,18 @@ const SettingsPage = () => {
             </div>
             <div>
               <label className="text-sm font-medium">
-                Test Due Day{" "}
+                Test Due Date{" "}
                 <span className="text-muted-foreground">(optional)</span>
               </label>
               <Input
-                type="number"
-                min={1}
-                max={31}
-                placeholder="e.g. 15"
-                value={newControl.testDueDay || ""}
+                type="date"
+                value={newControl.testDueDate || ""}
                 onChange={(e) =>
-                  setNewControl({
-                    ...newControl,
-                    testDueDay: e.target.value ? Number(e.target.value) : 0,
-                  })
+                  setNewControl({ ...newControl, testDueDate: e.target.value })
                 }
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Day of the month control testing is due.
+                Date this control's test is due.
               </p>
             </div>
             <div>
@@ -1219,24 +1218,25 @@ const SettingsPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium">
-                  Test Due Day{" "}
+                  Test Due Date{" "}
                   <span className="text-muted-foreground">(optional)</span>
                 </label>
                 <Input
-                  type="number"
-                  min={1}
-                  max={31}
-                  placeholder="e.g. 15"
-                  value={selectedControl.testDueDay || ""}
+                  type="date"
+                  value={
+                    selectedControl.testDueDate
+                      ? selectedControl.testDueDate.slice(0, 10)
+                      : ""
+                  }
                   onChange={(e) =>
                     setSelectedControl({
                       ...selectedControl,
-                      testDueDay: Number(e.target.value),
+                      testDueDate: e.target.value,
                     })
                   }
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Day of the month control testing is due.
+                  Date this control's test is due.
                 </p>
               </div>
               <div>

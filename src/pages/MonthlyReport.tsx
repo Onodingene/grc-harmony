@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
@@ -45,17 +52,23 @@ interface DetailedResult {
   testDate: string;
   controlId: string;
   controlName: string;
+  controlDescription: string | null;
   domain: string;
   tester: { fullName: string; email: string };
   sampleSize: number;
   exceptions: number;
   result: "pass" | "exception" | "fail";
   evidenceUrl: string | null;
+  evidenceUrls: string[];
+  comments: string | null;
+  recommendation: string | null;
 }
 
 interface ReportIssue {
   issueId: string;
   controlId: string;
+  controlName: string | null;
+  controlDescription: string | null;
   description: string;
   severity: string;
   status: string;
@@ -126,31 +139,56 @@ const MonthlyReport = () => {
     fetchReport(countryId, month);
   }, [selectedCountry?.id, month]);
 
+  // Description of a tested control, falling back to its name/id.
+  const controlDescriptionOf = (r: DetailedResult) =>
+    r.controlDescription || r.controlName || r.controlId;
+
+  // Description of an issue's control, falling back to its name/id.
+  const issueControlDescriptionOf = (i: ReportIssue) =>
+    i.controlDescription || i.controlName || i.controlId;
+
+  // All evidence files for a row (array first, single URL as fallback).
+  const evidenceUrlsOf = (r: DetailedResult) => {
+    if (r.evidenceUrls && r.evidenceUrls.length > 0) return r.evidenceUrls;
+    if (r.evidenceUrl) return [r.evidenceUrl];
+    return [];
+  };
+
+  // Quote/escape a CSV field so commas, quotes and newlines are safe.
+  const csvCell = (value: string | number | null | undefined) => {
+    const str = value == null ? "" : String(value);
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
   const handleExportCSV = () => {
     if (!report) return;
     const rows = [
       [
         "Test Date",
         "Control ID",
-        "Control Name",
+        "Control Description",
         "Domain",
         "Tester",
         "Sample Size",
         "Exceptions",
         "Result",
+        "Comment",
+        "Recommendation",
       ],
       ...report.detailedResults.map((r) => [
         new Date(r.testDate).toLocaleDateString(),
         r.controlId,
-        r.controlName,
+        controlDescriptionOf(r),
         r.domain,
         r.tester.fullName,
         r.sampleSize,
         r.exceptions,
         r.result,
+        r.comments ?? "",
+        r.recommendation ?? "",
       ]),
     ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -158,6 +196,155 @@ const MonthlyReport = () => {
     a.download = `report-${month}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportPDF = () => {
+    if (!report) return;
+
+    const esc = (value: string | number | null | undefined) => {
+      const str = value == null ? "" : String(value);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    };
+
+    const m = report.metrics;
+    const metricCards = [
+      { label: "Total Tests", value: m.totalTests },
+      { label: "Pass", value: m.passCount },
+      { label: "Exceptions", value: m.exceptionCount },
+      { label: "Fail", value: m.failCount },
+      { label: "Pass Rate", value: `${m.passRate}%` },
+      { label: "Coverage", value: `${m.coverage}%` },
+    ]
+      .map(
+        (c) =>
+          `<div class="metric"><span class="metric-label">${esc(
+            c.label
+          )}</span><span class="metric-value">${esc(c.value)}</span></div>`
+      )
+      .join("");
+
+    const detailRows = report.detailedResults.length
+      ? report.detailedResults
+          .map(
+            (r) => `<tr>
+              <td>${esc(new Date(r.testDate).toLocaleDateString())}</td>
+              <td>${esc(r.controlId)}</td>
+              <td>${esc(controlDescriptionOf(r))}</td>
+              <td>${esc(r.domain)}</td>
+              <td>${esc(r.tester.fullName)}</td>
+              <td>${esc(r.sampleSize)}</td>
+              <td>${esc(r.exceptions)}</td>
+              <td>${esc(r.result)}</td>
+              <td>${esc(r.comments ?? "—")}</td>
+              <td>${esc(r.recommendation ?? "—")}</td>
+            </tr>`
+          )
+          .join("")
+      : `<tr><td colspan="10" class="empty">No test results for this period</td></tr>`;
+
+    const issueRows = report.issues.length
+      ? report.issues
+          .map(
+            (i) => `<tr>
+              <td>${esc(i.issueId)}</td>
+              <td>${esc(issueControlDescriptionOf(i))}</td>
+              <td>${esc(i.description)}</td>
+              <td>${esc(i.severity)}</td>
+              <td>${esc(i.status.replace("_", " "))}</td>
+              <td>${esc(i.owner?.fullName ?? "—")}</td>
+              <td>${esc(
+                i.dueDate ? new Date(i.dueDate).toLocaleDateString() : "—"
+              )}</td>
+            </tr>`
+          )
+          .join("")
+      : `<tr><td colspan="7" class="empty">No issues for this period</td></tr>`;
+
+    const recommendations = report.recommendations.length
+      ? report.recommendations
+          .map((rec) => `<li>${esc(rec)}</li>`)
+          .join("")
+      : `<li>All controls are performing well.</li>`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Monthly Test Report - ${esc(report.period)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 32px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 24px 0 8px; }
+  .period { color: #555; font-size: 12px; margin-bottom: 16px; }
+  .metrics { display: flex; flex-wrap: wrap; gap: 12px; }
+  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #f9d75c; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
+  .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
+  .metric-value { display: block; font-size: 18px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+  th { background: #f9d75c; text-align: left; padding: 6px; }
+  td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .empty { text-align: center; color: #888; padding: 16px; }
+  ul { font-size: 12px; padding-left: 18px; }
+  @media print { body { margin: 12px; } }
+</style>
+</head>
+<body>
+  <h1>Monthly Test Report</h1>
+  <div class="period">${esc(report.company)} &middot; ${esc(
+      report.period
+    )}</div>
+
+  <h2>Summary</h2>
+  <div class="metrics">${metricCards}</div>
+
+  <h2>Detailed Test Results</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Test Date</th><th>Control ID</th><th>Control Description</th>
+        <th>Domain</th><th>Tester</th><th>Sample Size</th><th>Exceptions</th>
+        <th>Result</th><th>Comment</th><th>Recommendation</th>
+      </tr>
+    </thead>
+    <tbody>${detailRows}</tbody>
+  </table>
+
+  <h2>Issues Identified</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Issue ID</th><th>Control Description</th><th>Description</th>
+        <th>Severity</th><th>Status</th><th>Owner</th><th>Due Date</th>
+      </tr>
+    </thead>
+    <tbody>${issueRows}</tbody>
+  </table>
+
+  <h2>Recommendations</h2>
+  <ul>${recommendations}</ul>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast({
+        title: "Popup blocked",
+        description: "Allow popups to export the report as PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Give the new window a tick to render before invoking print.
+    setTimeout(() => win.print(), 300);
   };
 
   const resultColor = (result: string) => {
@@ -179,22 +366,24 @@ const MonthlyReport = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-semibold">Monthly Test Report</h1>
           <div className="flex gap-2">
-            <button
-              onClick={() => {
-                if (!month) return;
-                const countryId = selectedCountry?.id ?? "all";
-                fetchReport(countryId, month);
-              }}
-              className="bg-[#f9d75c] px-3 py-2 rounded-md text-sm font-medium"
-            >
-              {loading ? "Loading..." : "Generate Report"}
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="bg-gray-100 px-3 py-2 rounded-md text-sm"
-            >
-              Export CSV
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={loading || !report}
+                  className="bg-[#f9d75c] text-black hover:bg-[#f5cd3a] px-3 py-2 h-auto rounded-md text-sm font-medium"
+                >
+                  {loading ? "Loading..." : "Generate Report"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  Download CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  Download PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -343,20 +532,21 @@ const MonthlyReport = () => {
                     <tr>
                       <th className="p-2">Test Date</th>
                       <th>Control ID</th>
-                      <th>Control Name</th>
+                      <th>Control Description</th>
                       <th>Domain</th>
                       <th>Tester</th>
                       <th>Sample Size</th>
                       <th>Exceptions</th>
                       <th>Result</th>
-                      <th>Evidence</th>
+                      <th>Evidence &amp; Comment</th>
+                      <th>Recommendation</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.detailedResults.length === 0 && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={10}
                           className="p-4 text-center text-muted-foreground"
                         >
                           No test results for this period
@@ -369,7 +559,7 @@ const MonthlyReport = () => {
                           {new Date(r.testDate).toLocaleDateString()}
                         </td>
                         <td>{r.controlId}</td>
-                        <td>{r.controlName}</td>
+                        <td>{controlDescriptionOf(r)}</td>
                         <td>{r.domain}</td>
                         <td>{r.tester.fullName}</td>
                         <td>{r.sampleSize}</td>
@@ -380,20 +570,31 @@ const MonthlyReport = () => {
                         >
                           {r.result}
                         </td>
-                        <td>
-                          {r.evidenceUrl ? (
-                            <a
-                              href={`${BASE_URL}${r.evidenceUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline text-blue-600"
-                            >
-                              View
-                            </a>
+                        <td className="align-top">
+                          {evidenceUrlsOf(r).length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {evidenceUrlsOf(r).map((url, i) => (
+                                <a
+                                  key={i}
+                                  href={`${BASE_URL}${url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline text-blue-600"
+                                >
+                                  View{evidenceUrlsOf(r).length > 1 ? ` ${i + 1}` : ""}
+                                </a>
+                              ))}
+                            </div>
                           ) : (
                             "—"
                           )}
+                          {r.comments && (
+                            <p className="mt-1 text-muted-foreground italic">
+                              {r.comments}
+                            </p>
+                          )}
                         </td>
+                        <td className="align-top">{r.recommendation || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -408,7 +609,7 @@ const MonthlyReport = () => {
                 <thead className="bg-[#f9d75c] text-left">
                   <tr>
                     <th className="p-2">Issue ID</th>
-                    <th>Control ID</th>
+                    <th>Control Description</th>
                     <th>Description</th>
                     <th>Severity</th>
                     <th>Status</th>
@@ -430,7 +631,7 @@ const MonthlyReport = () => {
                   {report.issues.map((i) => (
                     <tr key={i.issueId} className="border-b">
                       <td className="p-2">{i.issueId}</td>
-                      <td>{i.controlId}</td>
+                      <td>{issueControlDescriptionOf(i)}</td>
                       <td>{i.description}</td>
                       <td
                         className={severityColor(i.severity)}
