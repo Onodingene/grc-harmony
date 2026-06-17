@@ -86,7 +86,9 @@ interface MonthlyReportData {
   recommendations: string[];
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+// Uploaded files are served at <host>/uploads, NOT under /api — strip the
+// trailing /api so evidence links resolve to the static file route.
+const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/api\/?$/, "");
 
 // Generate last 12 months as options
 const generateMonthOptions = () => {
