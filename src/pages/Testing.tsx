@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Paperclip, X } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
@@ -613,27 +613,76 @@ const Testing = () => {
             </div>
 
             <div className="col-span-2 grid gap-1.5">
-              <Label>Evidence Files (optional)</Label>
+              <Label>
+                Evidence Files{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional — you can attach several)
+                </span>
+              </Label>
               <Input
                 type="file"
                 multiple
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
-                onChange={(e) =>
-                  setEvidenceFiles(
-                    e.target.files ? Array.from(e.target.files) : []
-                  )
-                }
+                onChange={(e) => {
+                  const picked = e.target.files
+                    ? Array.from(e.target.files)
+                    : [];
+                  // Append (don't overwrite) and de-dupe by name+size, so
+                  // choosing files again adds to the list instead of replacing.
+                  setEvidenceFiles((prev) => {
+                    const seen = new Set(
+                      prev.map((f) => `${f.name}:${f.size}`),
+                    );
+                    return [
+                      ...prev,
+                      ...picked.filter((f) => !seen.has(`${f.name}:${f.size}`)),
+                    ];
+                  });
+                  // Reset so the same file can be re-picked and re-selecting works.
+                  e.target.value = "";
+                }}
               />
+              <p className="text-xs text-muted-foreground">
+                Add files one at a time or select several at once. Choosing more
+                adds to the list below — it won't replace what's there. PDF,
+                JPEG, PNG, WebP, XLSX, CSV — max 10MB each.
+              </p>
               {evidenceFiles.length > 0 && (
-                <ul className="text-xs text-muted-foreground list-disc pl-4">
-                  {evidenceFiles.map((file) => (
-                    <li key={file.name}>{file.name}</li>
+                <ul className="mt-1 space-y-1">
+                  {evidenceFiles.map((file, idx) => (
+                    <li
+                      key={`${file.name}:${file.size}`}
+                      className="flex items-center justify-between gap-2 rounded border bg-muted/40 px-2 py-1 text-xs"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Paperclip className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{file.name}</span>
+                        <span className="shrink-0 text-muted-foreground">
+                          ({Math.max(1, Math.round(file.size / 1024))} KB)
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${file.name}`}
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() =>
+                          setEvidenceFiles((prev) =>
+                            prev.filter((_, i) => i !== idx),
+                          )
+                        }
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </li>
                   ))}
                 </ul>
               )}
-              <p className="text-xs text-muted-foreground">
-                PDF, JPEG, PNG, WebP, XLSX, CSV — max 10MB each
-              </p>
+              {evidenceFiles.length > 0 && (
+                <p className="text-xs font-medium text-muted-foreground">
+                  {evidenceFiles.length} file
+                  {evidenceFiles.length > 1 ? "s" : ""} attached
+                </p>
+              )}
             </div>
 
             {form.result !== "pass" && (
