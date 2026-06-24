@@ -339,12 +339,21 @@ const SettingsPage = () => {
   
   const handleEditControl = async () => {
     if (!selectedControl) return;
+    const trimmedId = selectedControl.controlId?.trim();
+    if (!trimmedId) {
+      toast({
+        title: "Control ID required",
+        description: "Control ID cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
     const res = await apiFetch<MCSControl>(
       `/settings/controls/${selectedControl.id}`,
       {
         method: "PUT",
         body: JSON.stringify({
-          controlId: selectedControl.controlId,
+          controlId: trimmedId,
           name: selectedControl.name,
           domain: selectedControl.domain,
           description: selectedControl.description,
