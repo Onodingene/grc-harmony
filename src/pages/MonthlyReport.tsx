@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
+import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
 
 const StatCard = ({
@@ -581,7 +582,11 @@ const MonthlyReport = () => {
                                   href={`${BASE_URL}${url}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="underline text-blue-600"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openEvidence(url);
+                                  }}
+                                  className="underline text-blue-600 cursor-pointer"
                                 >
                                   View{evidenceUrlsOf(r).length > 1 ? ` ${i + 1}` : ""}
                                 </a>

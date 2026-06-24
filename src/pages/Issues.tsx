@@ -28,6 +28,7 @@ import {
 import { Plus, Download, Image as ImageIcon, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
+import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
 import { useAuthStore } from "@/lib/authStore";
 import MemberCombobox from "@/components/MemberCombobox";
@@ -525,6 +526,10 @@ const Issues = () => {
                       href={`${BASE_URL}${i.evidenceUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openEvidence(i.evidenceUrl);
+                      }}
                     >
                       <Badge
                         variant="outline"
