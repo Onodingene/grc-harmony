@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Download, Plus, Paperclip, X } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
 import { getAccessToken } from "@/lib/api";
@@ -415,7 +416,11 @@ const Testing = () => {
                               href={`${apiBase}${url}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-primary underline"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openEvidence(url);
+                              }}
+                              className="text-xs text-primary underline cursor-pointer"
                             >
                               File {i + 1}
                             </a>
