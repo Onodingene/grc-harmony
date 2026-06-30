@@ -235,7 +235,11 @@ const SettingsPage = () => {
   // ── Team handlers ──
   const handleInvite = async () => {
     if (!inviteEmail) return;
-    const res = await apiFetch("/invites", {
+    const res = await apiFetch<{
+      message?: string;
+      inviteLink?: string;
+      emailSent?: boolean;
+    }>("/invites", {
       method: "POST",
       body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
     });
@@ -243,10 +247,23 @@ const SettingsPage = () => {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
     }
-    toast({
-      title: "Invitation Sent",
-      description: `Invited ${inviteEmail} as ${roleConfig[inviteRole].label}`,
-    });
+    if (res.data?.emailSent === false) {
+      // Invite was created but the email didn't send — give the admin the link.
+      if (res.data.inviteLink) {
+        navigator.clipboard?.writeText(res.data.inviteLink).catch(() => {});
+      }
+      toast({
+        title: "Invite created — email not sent",
+        description:
+          "The invitation email could not be sent. The accept link was copied to your clipboard — share it manually.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Invitation Sent",
+        description: `Invited ${inviteEmail} as ${roleConfig[inviteRole].label}`,
+      });
+    }
     setInviteEmail("");
     setInviteRole("viewer");
     setInviteOpen(false);
