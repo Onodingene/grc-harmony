@@ -56,6 +56,7 @@ interface DetailedResult {
   controlDescription: string | null;
   domain: string;
   tester: { fullName: string; email: string };
+  testProcedure: string | null;
   sampleSize: number;
   exceptions: number;
   result: "pass" | "exception" | "fail";
@@ -172,6 +173,7 @@ const MonthlyReport = () => {
         "Control Description",
         "Domain",
         "Tester",
+        "Test Procedure",
         "Sample Size",
         "Exceptions",
         "Result",
@@ -184,6 +186,7 @@ const MonthlyReport = () => {
         controlDescriptionOf(r),
         r.domain,
         r.tester.fullName,
+        r.testProcedure ?? "",
         r.sampleSize,
         r.exceptions,
         r.result,
@@ -239,6 +242,7 @@ const MonthlyReport = () => {
               <td>${esc(controlDescriptionOf(r))}</td>
               <td>${esc(r.domain)}</td>
               <td>${esc(r.tester.fullName)}</td>
+              <td>${esc(r.testProcedure ?? "—")}</td>
               <td>${esc(r.sampleSize)}</td>
               <td>${esc(r.exceptions)}</td>
               <td>${esc(r.result)}</td>
@@ -310,7 +314,7 @@ const MonthlyReport = () => {
     <thead>
       <tr>
         <th>Test Date</th><th>Control ID</th><th>Control Description</th>
-        <th>Domain</th><th>Tester</th><th>Sample Size</th><th>Exceptions</th>
+        <th>Domain</th><th>Tester</th><th>Test Procedure</th><th>Sample Size</th><th>Exceptions</th>
         <th>Result</th><th>Comment</th><th>Recommendation</th>
       </tr>
     </thead>
@@ -538,6 +542,7 @@ const MonthlyReport = () => {
                       <th>Control Description</th>
                       <th>Domain</th>
                       <th>Tester</th>
+                      <th>Test Procedure</th>
                       <th>Sample Size</th>
                       <th>Exceptions</th>
                       <th>Result</th>
@@ -549,7 +554,7 @@ const MonthlyReport = () => {
                     {report.detailedResults.length === 0 && (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={11}
                           className="p-4 text-center text-muted-foreground"
                         >
                           No test results for this period
@@ -565,6 +570,9 @@ const MonthlyReport = () => {
                         <td>{controlDescriptionOf(r)}</td>
                         <td>{r.domain}</td>
                         <td>{r.tester.fullName}</td>
+                        <td className="whitespace-pre-wrap max-w-xs">
+                          {r.testProcedure || "—"}
+                        </td>
                         <td>{r.sampleSize}</td>
                         <td>{r.exceptions}</td>
                         <td
