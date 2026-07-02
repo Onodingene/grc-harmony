@@ -202,7 +202,7 @@ const TestPlan = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-auto">
-        <Table>
+        <Table className="min-w-[1400px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
           <TableHeader>
             <TableRow className="bg-primary text-primary-foreground">
               {[
@@ -251,7 +251,9 @@ const TestPlan = () => {
                   <TableCell className="font-bold text-primary">
                     {row.controlId}
                   </TableCell>
-                  <TableCell>{row.name}</TableCell>
+                  <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">
+                    {row.name}
+                  </TableCell>
                   <TableCell>{row.domain}</TableCell>
                   <TableCell className="text-sm">
                     {row.owner?.email ?? "—"}

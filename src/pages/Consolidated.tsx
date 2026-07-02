@@ -107,7 +107,7 @@ const Consolidated = () => {
           <CardTitle className="text-base">Country Comparison Matrix</CardTitle>
         </CardHeader>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[1200px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
             <thead>
               <tr style={{ background: MUSTARD }}>
                 {["Country", "Total Due", "Tested", "Pass Count", "Exceptions", "Failures", "Pass Rate", "Coverage", "RAG", ""].map((h) => (
