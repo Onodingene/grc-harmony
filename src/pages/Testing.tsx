@@ -349,7 +349,7 @@ const Testing = () => {
       )}
 
       <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
+        <Table className="min-w-[1200px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Test ID</TableHead>
@@ -380,7 +380,7 @@ const Testing = () => {
                 <TableRow key={t.id}>
                   <TableCell>{t.testId}</TableCell>
                   <TableCell>{t.control?.controlId}</TableCell>
-                  <TableCell>{t.testName}</TableCell>
+                  <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{t.testName}</TableCell>
                   <TableCell>{t.period}</TableCell>
                   <TableCell>
                     {new Date(t.testedAt).toLocaleDateString()}

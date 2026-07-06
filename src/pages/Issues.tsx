@@ -456,7 +456,7 @@ const Issues = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
+        <Table className="min-w-[1400px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>RAG</TableHead>
@@ -501,7 +501,7 @@ const Issues = () => {
                   />
                 </TableCell>
                 <TableCell className="font-semibold">{i.issueId}</TableCell>
-                <TableCell className="max-w-xs truncate">
+                <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">
                   {i.description}
                 </TableCell>
                 <TableCell className="font-mono">

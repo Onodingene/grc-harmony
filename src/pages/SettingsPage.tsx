@@ -527,7 +527,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table>
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Name</TableHead>
@@ -616,7 +616,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table>
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Control ID</TableHead>
@@ -634,7 +634,7 @@ const SettingsPage = () => {
                     <TableCell className="font-mono font-medium">
                       {c.controlId}
                     </TableCell>
-                    <TableCell>{c.name}</TableCell>
+                    <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{c.name}</TableCell>
                     <TableCell>{c.domain}</TableCell>
                     <TableCell className="capitalize">{c.frequency}</TableCell>
                     <TableCell>

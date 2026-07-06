@@ -534,7 +534,7 @@ const MonthlyReport = () => {
                 Detailed Test Results
               </h2>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+                <table className="min-w-[1400px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:whitespace-nowrap">
                   <thead className="bg-[#f9d75c] text-left">
                     <tr>
                       <th className="p-2">Test Date</th>
@@ -567,10 +567,12 @@ const MonthlyReport = () => {
                           {new Date(r.testDate).toLocaleDateString()}
                         </td>
                         <td>{r.controlId}</td>
-                        <td>{controlDescriptionOf(r)}</td>
+                        <td className="whitespace-normal min-w-[240px] max-w-[360px]">
+                          {controlDescriptionOf(r)}
+                        </td>
                         <td>{r.domain}</td>
                         <td>{r.tester.fullName}</td>
-                        <td className="whitespace-pre-wrap max-w-xs">
+                        <td className="whitespace-normal min-w-[240px] max-w-[360px]">
                           {r.testProcedure || "—"}
                         </td>
                         <td>{r.sampleSize}</td>
@@ -581,7 +583,7 @@ const MonthlyReport = () => {
                         >
                           {r.result}
                         </td>
-                        <td className="align-top">
+                        <td className="align-top whitespace-normal min-w-[220px] max-w-[340px]">
                           {evidenceUrlsOf(r).length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                               {evidenceUrlsOf(r).map((url, i) => (
@@ -609,7 +611,9 @@ const MonthlyReport = () => {
                             </p>
                           )}
                         </td>
-                        <td className="align-top">{r.recommendation || "—"}</td>
+                        <td className="align-top whitespace-normal min-w-[220px] max-w-[340px]">
+                          {r.recommendation || "—"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -620,7 +624,8 @@ const MonthlyReport = () => {
             {/* ISSUES */}
             <div>
               <h2 className="text-sm font-semibold mb-2">Issues Identified</h2>
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+                <table className="min-w-[1000px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:whitespace-nowrap">
                 <thead className="bg-[#f9d75c] text-left">
                   <tr>
                     <th className="p-2">Issue ID</th>
@@ -646,8 +651,12 @@ const MonthlyReport = () => {
                   {report.issues.map((i) => (
                     <tr key={i.issueId} className="border-b">
                       <td className="p-2">{i.issueId}</td>
-                      <td>{issueControlDescriptionOf(i)}</td>
-                      <td>{i.description}</td>
+                      <td className="whitespace-normal min-w-[220px] max-w-[340px]">
+                        {issueControlDescriptionOf(i)}
+                      </td>
+                      <td className="whitespace-normal min-w-[220px] max-w-[340px]">
+                        {i.description}
+                      </td>
                       <td
                         className={severityColor(i.severity)}
                         style={{ textTransform: "capitalize" }}
@@ -669,7 +678,8 @@ const MonthlyReport = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
 
             {/* RECOMMENDATIONS */}

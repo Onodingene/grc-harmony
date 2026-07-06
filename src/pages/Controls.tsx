@@ -280,7 +280,7 @@ const Controls = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-auto">
-        <Table>
+        <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
@@ -320,8 +320,8 @@ const Controls = () => {
               filtered.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-semibold">{c.controlId}</TableCell>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell className="max-w-xs min-w-[200px] whitespace-normal break-words">{c.description}</TableCell>
+                  <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{c.name}</TableCell>
+                  <TableCell className="max-w-xs break-words whitespace-normal min-w-[220px] max-w-[360px]">{c.description}</TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
                       {c.domain}

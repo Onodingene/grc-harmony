@@ -114,7 +114,7 @@ const Audit = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
+        <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Audit ID</TableHead>
@@ -129,8 +129,8 @@ const Audit = () => {
             {audits.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="font-semibold">{a.id}</TableCell>
-                <TableCell>{a.title}</TableCell>
-                <TableCell>{a.scope}</TableCell>
+                <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{a.title}</TableCell>
+                <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{a.scope}</TableCell>
                 <TableCell>
                   <Badge className={statusColors[a.status]}>{a.status}</Badge>
                 </TableCell>
