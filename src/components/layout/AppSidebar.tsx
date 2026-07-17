@@ -47,7 +47,7 @@ const allNavItems = [
     to: "/testing",
     label: "Testing",
     icon: ClipboardCheck,
-    roles: ["admin", "tester"],
+    roles: ["admin", "tester", "control_owner"],
   },
   {
     to: "/monthly-report",
@@ -67,7 +67,12 @@ const allNavItems = [
   //   icon: Zap,
   //   roles: ["admin", "control_owner", "tester"],
   // },
-  // { to: "/audit", label: "Audit", icon: Search, roles: ["admin"] },
+  {
+    to: "/audit",
+    label: "Audit",
+    icon: Search,
+    roles: ["admin", "control_owner"],
+  },
   {
     to: "/calendar",
     label: "Calendar",

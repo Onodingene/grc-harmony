@@ -26,10 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus, Paperclip, X } from "lucide-react";
+import { Download, Plus, Paperclip, X, Pencil } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
+import { useAuthStore } from "@/lib/authStore";
 import { useToast } from "@/hooks/use-toast";
 import { getAccessToken } from "@/lib/api";
 
@@ -57,9 +58,10 @@ interface TestResult {
   evidenceUrls: string[] | null;
   testProcedure: string | null;
   comments: string | null;
+  recommendation: string | null;
   testedAt: string;
   control: { controlId: string; name: string; domain: string };
-  tester: { fullName: string; email: string };
+  tester: { id: string; fullName: string; email: string };
 }
 
 const statusColors: Record<string, string> = {
@@ -99,6 +101,10 @@ const emptyForm = {
 const Testing = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
+  const { user } = useAuthStore();
+
+  // Control owners get a read-only view of testing on the controls they own.
+  const isOwnerView = user?.role === "control_owner";
 
   const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -113,6 +119,19 @@ const Testing = () => {
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const [editing, setEditing] = useState<TestResult | null>(null);
+  const [editForm, setEditForm] = useState({
+    testName: "",
+    population: 0,
+    sampleSize: 0,
+    exceptions: 0,
+    result: "pass" as "pass" | "exception" | "fail",
+    testProcedure: "",
+    comments: "",
+    recommendation: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [countries, setCountries] = useState<
     { id: string; name: string; code: string }[]
@@ -280,6 +299,68 @@ const Testing = () => {
     setOpen(false);
   };
 
+  // A tester may edit only their own submissions; admins may edit any.
+  const canEdit = (t: TestResult) =>
+    user?.role === "admin" ||
+    (user?.role === "tester" && t.tester?.id === user?.id);
+
+  const openEdit = (t: TestResult) => {
+    setEditing(t);
+    setEditForm({
+      testName: t.testName ?? "",
+      population: t.population ?? 0,
+      sampleSize: t.sampleSize ?? 0,
+      exceptions: t.exceptions ?? 0,
+      result: t.result,
+      testProcedure: t.testProcedure ?? "",
+      comments: t.comments ?? "",
+      recommendation: t.recommendation ?? "",
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editing) return;
+    if (!editForm.testName.trim()) {
+      toast({ title: "Test name is required", variant: "destructive" });
+      return;
+    }
+
+    setSavingEdit(true);
+    const res = await apiFetch<TestResult>(`/testing/${editing.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(editForm),
+    });
+    setSavingEdit(false);
+
+    if (res.error) {
+      toast({
+        title: "Could not update test",
+        description: res.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const resultChanged = editing.result !== editForm.result;
+    const clearedIssue = editing.result !== "pass" && editForm.result === "pass";
+
+    if (res.data) {
+      setTests((prev) =>
+        prev.map((t) => (t.id === editing.id ? res.data! : t)),
+      );
+    }
+
+    toast({
+      title: "Test updated",
+      description: clearedIssue
+        ? "Result now passes — the linked issue was closed."
+        : resultChanged
+          ? `Result changed to ${editForm.result.toUpperCase()}.`
+          : undefined,
+    });
+    setEditing(null);
+  };
+
   const exportCSV = () => {
     if (!tests.length) return;
 
@@ -312,7 +393,10 @@ const Testing = () => {
         <div>
           <h1 className="text-2xl font-bold">Testing</h1>
           <p className="text-muted-foreground text-sm">
-            Record and track control test executions — {selectedCountry?.name}
+            {isOwnerView
+              ? "All testing carried out on your controls"
+              : "Record and track control test executions"}
+            {selectedCountry?.name ? ` — ${selectedCountry.name}` : ""}
           </p>
         </div>
 
@@ -334,13 +418,15 @@ const Testing = () => {
             <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
 
-          <Button onClick={openAdd} disabled={availableControls.length === 0}>
-            <Plus className="w-4 h-4 mr-1" /> Record New Test
-          </Button>
+          {!isOwnerView && (
+            <Button onClick={openAdd} disabled={availableControls.length === 0}>
+              <Plus className="w-4 h-4 mr-1" /> Record New Test
+            </Button>
+          )}
         </div>
       </div>
 
-      {availableControls.length > 0 && (
+      {!isOwnerView && availableControls.length > 0 && (
         <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-800">
           {availableControls.length} control
           {availableControls.length > 1 ? "s" : ""} still pending testing for
@@ -358,21 +444,25 @@ const Testing = () => {
               <TableHead>Period</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Result</TableHead>
+              <TableHead>Tester</TableHead>
               <TableHead>Evidence</TableHead>
+              {!isOwnerView && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
 
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={isOwnerView ? 8 : 9} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : tests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  No tests recorded.
+                <TableCell colSpan={isOwnerView ? 8 : 9} className="text-center py-8">
+                  {isOwnerView
+                    ? "No testing recorded on your controls for this period."
+                    : "No tests recorded."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -387,6 +477,9 @@ const Testing = () => {
                   </TableCell>
                   <TableCell>
                     <Badge className={statusColors[t.result]}>{t.result}</Badge>
+                  </TableCell>
+                  <TableCell className="whitespace-normal min-w-[140px] max-w-[220px]">
+                    {t.tester?.fullName || t.tester?.email || "—"}
                   </TableCell>
                   <TableCell>
                     {(() => {
@@ -429,6 +522,21 @@ const Testing = () => {
                       );
                     })()}
                   </TableCell>
+                  {!isOwnerView && (
+                    <TableCell>
+                      {canEdit(t) ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEdit(t)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
@@ -704,6 +812,146 @@ const Testing = () => {
             </Button>
             <Button onClick={handleSave} disabled={saving || uploading}>
               {uploading ? "Uploading..." : saving ? "Saving..." : "Save Test"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit / review an already-submitted test */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Edit Test {editing?.testId} — {editing?.control?.controlId}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 py-2">
+            <div className="col-span-2 grid gap-1.5">
+              <Label>Test Name</Label>
+              <Input
+                value={editForm.testName}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, testName: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Population</Label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.population}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    population: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Sample Size</Label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.sampleSize}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    sampleSize: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Exceptions</Label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.exceptions}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    exceptions: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Result</Label>
+              <Select
+                value={editForm.result}
+                onValueChange={(v: "pass" | "exception" | "fail") =>
+                  setEditForm((f) => ({ ...f, result: v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pass">Pass</SelectItem>
+                  <SelectItem value="exception">Exception</SelectItem>
+                  <SelectItem value="fail">Fail</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="col-span-2 grid gap-1.5">
+              <Label>Test Procedure</Label>
+              <Textarea
+                rows={2}
+                value={editForm.testProcedure}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, testProcedure: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="col-span-2 grid gap-1.5">
+              <Label>Comments</Label>
+              <Textarea
+                rows={2}
+                value={editForm.comments}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, comments: e.target.value }))
+                }
+              />
+            </div>
+
+            {editForm.result !== "pass" && (
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Recommendation</Label>
+                <Textarea
+                  rows={2}
+                  value={editForm.recommendation}
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      recommendation: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            )}
+
+            {editing && editing.result !== "pass" && editForm.result === "pass" && (
+              <div className="col-span-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+                Changing this to Pass will close the issue raised by this test.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
