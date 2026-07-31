@@ -306,11 +306,11 @@ const MonthlyReport = () => {
   .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
   .metric-value { display: block; font-size: 18px; font-weight: bold; }
   /* Fixed layout + wrapping keeps long descriptions inside their column
-     instead of running off the page and over the next one. */
-  table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
-  th { background: #f9d75c; text-align: left; padding: 6px; }
-  td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; }
-  th, td { word-wrap: break-word; overflow-wrap: anywhere; }
+     instead of running off the page and over the next one. "anywhere" also
+     breaks unbroken strings such as long file names. */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; table-layout: fixed; }
+  th { background: #f9d75c; text-align: left; padding: 6px; word-wrap: break-word; }
+  td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
   .empty { text-align: center; color: #888; padding: 16px; }
   ul { font-size: 12px; padding-left: 18px; }
   @media print { body { margin: 12px; } }
@@ -550,18 +550,31 @@ const MonthlyReport = () => {
                 Detailed Test Results
               </h2>
               <div className="overflow-x-auto">
-                <table className="min-w-[1400px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:break-words">
+                <table className="min-w-[1500px] w-full table-fixed text-xs text-left [&_th]:p-2 [&_td]:p-2 [&_td]:align-top">
+                  <colgroup>
+                    <col className="w-[90px]" />  {/* Test Date */}
+                    <col className="w-[90px]" />  {/* Control ID */}
+                    <col className="w-[260px]" /> {/* Control Description */}
+                    <col className="w-[130px]" /> {/* Domain */}
+                    <col className="w-[140px]" /> {/* Tester */}
+                    <col className="w-[260px]" /> {/* Test Procedure */}
+                    <col className="w-[80px]" />  {/* Sample Size */}
+                    <col className="w-[80px]" />  {/* Exceptions */}
+                    <col className="w-[80px]" />  {/* Result */}
+                    <col className="w-[240px]" /> {/* Evidence & Comment */}
+                    <col className="w-[240px]" /> {/* Recommendation */}
+                  </colgroup>
                   <thead className="bg-[#f9d75c] text-left">
                     <tr>
-                      <th className="p-2">Test Date</th>
-                      <th>Control ID</th>
+                      <th className="whitespace-nowrap">Test Date</th>
+                      <th className="whitespace-nowrap">Control ID</th>
                       <th>Control Description</th>
-                      <th>Domain</th>
-                      <th>Tester</th>
+                      <th className="whitespace-nowrap">Domain</th>
+                      <th className="whitespace-nowrap">Tester</th>
                       <th>Test Procedure</th>
-                      <th>Sample Size</th>
-                      <th>Exceptions</th>
-                      <th>Result</th>
+                      <th className="whitespace-nowrap">Sample Size</th>
+                      <th className="whitespace-nowrap">Exceptions</th>
+                      <th className="whitespace-nowrap">Result</th>
                       <th>Evidence &amp; Comment</th>
                       <th>Recommendation</th>
                     </tr>
@@ -579,27 +592,27 @@ const MonthlyReport = () => {
                     )}
                     {report.detailedResults.map((r, idx) => (
                       <tr key={idx} className="border-b">
-                        <td className="p-2">
+                        <td className="whitespace-nowrap">
                           {new Date(r.testDate).toLocaleDateString()}
                         </td>
-                        <td>{r.controlId}</td>
-                        <td className="whitespace-normal min-w-[240px] max-w-[360px]">
+                        <td className="whitespace-nowrap">{r.controlId}</td>
+                        <td className="whitespace-normal break-words">
                           {controlDescriptionOf(r)}
                         </td>
-                        <td>{r.domain}</td>
-                        <td>{r.tester.fullName}</td>
-                        <td className="whitespace-normal min-w-[240px] max-w-[360px]">
+                        <td className="whitespace-nowrap">{r.domain}</td>
+                        <td className="whitespace-nowrap">{r.tester.fullName}</td>
+                        <td className="whitespace-normal break-words">
                           {r.testProcedure || "—"}
                         </td>
-                        <td>{r.sampleSize}</td>
-                        <td>{r.exceptions}</td>
+                        <td className="whitespace-nowrap">{r.sampleSize}</td>
+                        <td className="whitespace-nowrap">{r.exceptions}</td>
                         <td
-                          className={resultColor(r.result)}
+                          className={`whitespace-nowrap ${resultColor(r.result)}`}
                           style={{ textTransform: "capitalize" }}
                         >
                           {r.result}
                         </td>
-                        <td className="align-top whitespace-normal min-w-[220px] max-w-[340px]">
+                        <td className="whitespace-normal break-words">
                           {evidenceUrlsOf(r).length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                               {evidenceUrlsOf(r).map((url, i) => (
@@ -627,7 +640,7 @@ const MonthlyReport = () => {
                             </p>
                           )}
                         </td>
-                        <td className="align-top whitespace-normal min-w-[220px] max-w-[340px]">
+                        <td className="whitespace-normal break-words">
                           {r.recommendation || "—"}
                         </td>
                       </tr>
@@ -641,59 +654,70 @@ const MonthlyReport = () => {
             <div>
               <h2 className="text-sm font-semibold mb-2">Issues Identified</h2>
               <div className="overflow-x-auto">
-                <table className="min-w-[1000px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:break-words">
-                <thead className="bg-[#f9d75c] text-left">
-                  <tr>
-                    <th className="p-2">Issue ID</th>
-                    <th>Control Description</th>
-                    <th>Description</th>
-                    <th>Severity</th>
-                    <th>Status</th>
-                    <th>Owner</th>
-                    <th>Due Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.issues.length === 0 && (
+                <table className="min-w-[1100px] w-full table-fixed text-xs text-left [&_th]:p-2 [&_td]:p-2 [&_td]:align-top">
+                  <colgroup>
+                    <col className="w-[100px]" /> {/* Issue ID */}
+                    <col className="w-[220px]" /> {/* Control Description */}
+                    <col className="w-[280px]" /> {/* Description */}
+                    <col className="w-[90px]" />  {/* Severity */}
+                    <col className="w-[110px]" /> {/* Status */}
+                    <col className="w-[150px]" /> {/* Owner */}
+                    <col className="w-[110px]" /> {/* Due Date */}
+                  </colgroup>
+                  <thead className="bg-[#f9d75c] text-left">
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="p-4 text-center text-muted-foreground"
-                      >
-                        No issues for this period
-                      </td>
+                      <th className="whitespace-nowrap">Issue ID</th>
+                      <th>Control Description</th>
+                      <th>Description</th>
+                      <th className="whitespace-nowrap">Severity</th>
+                      <th className="whitespace-nowrap">Status</th>
+                      <th className="whitespace-nowrap">Owner</th>
+                      <th className="whitespace-nowrap">Due Date</th>
                     </tr>
-                  )}
-                  {report.issues.map((i) => (
-                    <tr key={i.issueId} className="border-b">
-                      <td className="p-2">{i.issueId}</td>
-                      <td className="whitespace-normal min-w-[220px] max-w-[340px]">
-                        {issueControlDescriptionOf(i)}
-                      </td>
-                      <td className="whitespace-normal min-w-[220px] max-w-[340px]">
-                        {i.description}
-                      </td>
-                      <td
-                        className={severityColor(i.severity)}
-                        style={{ textTransform: "capitalize" }}
-                      >
-                        {i.severity}
-                      </td>
-                      <td
-                        className="text-red-600"
-                        style={{ textTransform: "capitalize" }}
-                      >
-                        {i.status.replace("_", " ")}
-                      </td>
-                      <td>{i.owner?.fullName ?? "—"}</td>
-                      <td>
-                        {i.dueDate
-                          ? new Date(i.dueDate).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody>
+                    {report.issues.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="p-4 text-center text-muted-foreground"
+                        >
+                          No issues for this period
+                        </td>
+                      </tr>
+                    )}
+                    {report.issues.map((i) => (
+                      <tr key={i.issueId} className="border-b">
+                        <td className="whitespace-nowrap">{i.issueId}</td>
+                        <td className="whitespace-normal break-words">
+                          {issueControlDescriptionOf(i)}
+                        </td>
+                        <td className="whitespace-normal break-words">
+                          {i.description}
+                        </td>
+                        <td
+                          className={`whitespace-nowrap ${severityColor(i.severity)}`}
+                          style={{ textTransform: "capitalize" }}
+                        >
+                          {i.severity}
+                        </td>
+                        <td
+                          className="whitespace-nowrap text-red-600"
+                          style={{ textTransform: "capitalize" }}
+                        >
+                          {i.status.replace("_", " ")}
+                        </td>
+                        <td className="whitespace-nowrap">
+                          {i.owner?.fullName ?? "—"}
+                        </td>
+                        <td className="whitespace-nowrap">
+                          {i.dueDate
+                            ? new Date(i.dueDate).toLocaleDateString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             </div>
