@@ -527,7 +527,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Name</TableHead>
@@ -566,7 +566,7 @@ const SettingsPage = () => {
                       >
                         <Edit className="w-3 h-3 mr-1" /> Role
                       </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {
@@ -616,7 +616,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Control ID</TableHead>
@@ -658,7 +658,7 @@ const SettingsPage = () => {
                       >
                         <Edit className="w-3 h-3 mr-1" /> Edit
                       </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {
@@ -732,7 +732,7 @@ const SettingsPage = () => {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.code}</TableCell>
                     <TableCell className="text-right">
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {

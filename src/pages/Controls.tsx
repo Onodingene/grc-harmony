@@ -280,7 +280,7 @@ const Controls = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-auto">
-        <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+        <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>
@@ -356,7 +356,7 @@ const Controls = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-7 text-xs"
+                        className="h-8 text-xs"
                         onClick={() => openEdit(c)}
                       >
                         <Pencil className="w-3 h-3 mr-1" /> Edit
@@ -364,7 +364,7 @@ const Controls = () => {
                       <Button
                         size="sm"
                         variant="destructive"
-                        className="h-7 text-xs"
+                        className="h-8 text-xs"
                         onClick={() => { setControlToDelete(c); setDeleteOpen(true); }}
                       >
                         <Trash2 className="w-3 h-3 mr-1" /> Delete

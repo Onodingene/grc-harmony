@@ -71,7 +71,7 @@ const allNavItems = [
     to: "/audit",
     label: "Audit",
     icon: Search,
-    roles: ["admin", "control_owner"],
+    roles: ["admin", "tester", "control_owner"],
   },
   {
     to: "/calendar",
