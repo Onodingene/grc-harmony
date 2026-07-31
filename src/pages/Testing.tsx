@@ -53,7 +53,7 @@ interface TestResult {
   population: number;
   sampleSize: number;
   exceptions: number;
-  result: "pass" | "exception" | "fail";
+  result: "pass" | "fail";
   evidenceUrl: string | null;
   evidenceUrls: string[] | null;
   testProcedure: string | null;
@@ -67,7 +67,6 @@ interface TestResult {
 const statusColors: Record<string, string> = {
   pass: "bg-green-100 text-green-800",
   fail: "bg-red-100 text-red-800",
-  exception: "bg-orange-100 text-orange-800",
 };
 
 const months = Array.from({ length: 12 }, (_, i) => {
@@ -92,7 +91,7 @@ const emptyForm = {
   population: 0,
   sampleSize: 0,
   exceptions: 0,
-  result: "pass" as "pass" | "exception" | "fail",
+  result: "pass" as "pass" | "fail",
   testProcedure: "",
   comments: "",
   recommendation: "",
@@ -126,7 +125,7 @@ const Testing = () => {
     population: 0,
     sampleSize: 0,
     exceptions: 0,
-    result: "pass" as "pass" | "exception" | "fail",
+    result: "pass" as "pass" | "fail",
     testProcedure: "",
     comments: "",
     recommendation: "",
@@ -372,7 +371,7 @@ const Testing = () => {
       Date: t.testedAt,
       Sample: t.sampleSize,
       Population: t.population,
-      Exceptions: t.exceptions,
+      "Failed Items": t.exceptions,
       Result: t.result,
     }));
 
@@ -667,7 +666,7 @@ const Testing = () => {
             </div>
 
             <div className="grid gap-1.5">
-              <Label>Exceptions Found</Label>
+              <Label>Failed Items</Label>
               <Input
                 type="number"
                 min={0}
@@ -682,7 +681,7 @@ const Testing = () => {
               <Label>Result</Label>
               <Select
                 value={form.result}
-                onValueChange={(v: "pass" | "exception" | "fail") =>
+                onValueChange={(v: "pass" | "fail") =>
                   setForm({ ...form, result: v })
                 }
               >
@@ -691,7 +690,6 @@ const Testing = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pass">Pass</SelectItem>
-                  <SelectItem value="exception">Exception</SelectItem>
                   <SelectItem value="fail">Fail</SelectItem>
                 </SelectContent>
               </Select>
@@ -890,7 +888,7 @@ const Testing = () => {
               <Label>Result</Label>
               <Select
                 value={editForm.result}
-                onValueChange={(v: "pass" | "exception" | "fail") =>
+                onValueChange={(v: "pass" | "fail") =>
                   setEditForm((f) => ({ ...f, result: v }))
                 }
               >
@@ -899,7 +897,6 @@ const Testing = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pass">Pass</SelectItem>
-                  <SelectItem value="exception">Exception</SelectItem>
                   <SelectItem value="fail">Fail</SelectItem>
                 </SelectContent>
               </Select>

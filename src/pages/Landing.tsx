@@ -151,7 +151,7 @@ const Landing = () => {
                   { id: "MCS01", name: "Code of Business Conduct", status: "Pending" },
                   { id: "MCS03", name: "Related Party Transactions", status: "Pass" },
                   { id: "MCS32", name: "Payment Processing", status: "Fail" },
-                  { id: "MCS34", name: "Physical Stock Count", status: "Exception" },
+                  { id: "MCS34", name: "Physical Stock Count", status: "Fail" },
                 ].map((row) => (
                   <div key={row.id} className="flex items-center justify-between px-4 py-2.5 text-xs bg-white hover:bg-gray-50 transition-colors">
                     <span className="font-mono font-semibold text-gray-400 w-14">{row.id}</span>
@@ -162,12 +162,12 @@ const Landing = () => {
                         background:
                           row.status === "Pass" ? "#d1fae5" :
                           row.status === "Fail" ? "#fee2e2" :
-                          row.status === "Exception" ? MUSTARD_MID :
+                          row.status === "Fail" ? MUSTARD_MID :
                           "#f3f4f6",
                         color:
                           row.status === "Pass" ? "#065f46" :
                           row.status === "Fail" ? "#991b1b" :
-                          row.status === "Exception" ? "#7a5f00" :
+                          row.status === "Fail" ? "#7a5f00" :
                           "#6b7280",
                       }}
                     >

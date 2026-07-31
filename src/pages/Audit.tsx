@@ -36,6 +36,12 @@ import {
   Send,
   MessageSquare,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { exportToCSV } from "@/lib/csv-export";
 import { apiFetch, getAccessToken } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
@@ -163,7 +169,7 @@ const NO_RECIPIENT = "__none__";
 
 const Audit = () => {
   const { selectedCountry } = useCountryStore();
-  const { user } = useAuthStore();
+  const { user, company } = useAuthStore();
   const { toast } = useToast();
 
   // Control owners are responders: they see only audits addressed to them and
@@ -516,6 +522,182 @@ const Audit = () => {
     ),
   }));
 
+  // One combined report covering every audit, laid out like the monthly test
+  // report so the two read as the same family of document.
+  const handleExportPDF = () => {
+    if (audits.length === 0) {
+      toast({ title: "No audits to report on", variant: "destructive" });
+      return;
+    }
+
+    const esc = (value: string | number | null | undefined) => {
+      const str = value == null ? "" : String(value);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    };
+
+    const allIssues = audits.flatMap((a) =>
+      a.periods.flatMap((p) => p.issues.map((i) => ({ ...i, audit: a, period: p }))),
+    );
+    const openIssues = allIssues.filter((i) => i.status !== "closed");
+    const evidenceCount = audits.reduce(
+      (n, a) => n + a.periods.reduce((m, p) => m + p.evidenceUrls.length, 0),
+      0,
+    );
+
+    const metricCards = [
+      { label: "Audits", value: audits.length },
+      { label: "Findings", value: allIssues.length },
+      { label: "Open", value: openIssues.length },
+      { label: "Closed", value: allIssues.length - openIssues.length },
+      { label: "High", value: allIssues.filter((i) => i.severity === "high").length },
+      { label: "Evidence Files", value: evidenceCount },
+    ]
+      .map(
+        (c) =>
+          `<div class="metric"><span class="metric-label">${esc(
+            c.label,
+          )}</span><span class="metric-value">${esc(c.value)}</span></div>`,
+      )
+      .join("");
+
+    const summaryRows = audits
+      .map((a) => {
+        const open = a.periods.reduce(
+          (n, p) => n + p.issues.filter((i) => i.status !== "closed").length,
+          0,
+        );
+        return `<tr>
+          <td>${esc(a.auditId)}</td>
+          <td>${esc(a.areaProcess ?? "—")}</td>
+          <td>${esc(a.auditName)}</td>
+          <td>${esc(a.control.controlId)}</td>
+          <td>${esc(FREQUENCY_LABELS[a.frequency] ?? a.frequency)}</td>
+          <td>${esc(a.lead ?? "—")}</td>
+          <td>${esc(a.recipient ? (a.recipient.fullName ?? a.recipient.email) : "—")}</td>
+          <td>${esc(open)}</td>
+        </tr>`;
+      })
+      .join("");
+
+    // Each audit in full, followed by its findings.
+    const auditSections = audits
+      .map((a) => {
+        const rows = a.periods
+          .flatMap((p) =>
+            p.issues.map(
+              (i) => `<tr>
+              <td>${esc(i.auditIssueId)}</td>
+              <td>${esc(p.period)}</td>
+              <td>${esc(i.description)}</td>
+              <td>${esc(i.severity)}</td>
+              <td>${esc(i.status.replace("_", " "))}</td>
+              <td>${esc(i.evidenceUrls.length)}</td>
+            </tr>`,
+            ),
+          )
+          .join("");
+
+        const field = (label: string, value: string | null | undefined) =>
+          `<tr><th class="fld">${esc(label)}</th><td>${esc(value || "—")}</td></tr>`;
+
+        return `<section class="audit">
+        <h2>${esc(a.auditId)} — ${esc(a.auditName)}</h2>
+        <table class="fields">
+          ${field("Area / Process", a.areaProcess)}
+          ${field("Control", `${a.control.controlId} — ${a.control.name}`)}
+          ${field("Objectives", a.objectives)}
+          ${field("Scope", a.scope)}
+          ${field("Key Risks", a.keyRisks)}
+          ${field("Lead", a.lead)}
+          ${field("Procedures / Test Steps", a.procedures)}
+          ${field("Frequency", FREQUENCY_LABELS[a.frequency] ?? a.frequency)}
+          ${field("Starts", `${a.startMonth} (day ${a.dueDay})`)}
+          ${field(
+            "Recipient",
+            a.recipient ? (a.recipient.fullName ?? a.recipient.email) : null,
+          )}
+        </table>
+        <h3>Findings</h3>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Period</th><th>Finding</th><th>Severity</th><th>Status</th><th>Evidence</th>
+          </tr></thead>
+          <tbody>${
+            rows ||
+            `<tr><td colspan="6" class="empty">No findings raised</td></tr>`
+          }</tbody>
+        </table>
+      </section>`;
+      })
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Audit Report - ${esc(company?.name ?? "")}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 32px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 24px 0 8px; }
+  h3 { font-size: 12px; margin: 14px 0 6px; color: #444; }
+  .period { color: #555; font-size: 12px; margin-bottom: 16px; }
+  .metrics { display: flex; flex-wrap: wrap; gap: 12px; }
+  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #f9d75c; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
+  .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
+  .metric-value { display: block; font-size: 18px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; table-layout: fixed; }
+  th { background: #f9d75c; text-align: left; padding: 6px; word-wrap: break-word; }
+  td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
+  .fields th.fld { background: #fbfbfb; width: 170px; color: #555; font-weight: normal; }
+  .empty { text-align: center; color: #888; padding: 16px; }
+  .audit { page-break-inside: avoid; margin-top: 22px; }
+  @media print { body { margin: 12px; } }
+</style>
+</head>
+<body>
+  <h1>Audit Report</h1>
+  <div class="period">${esc(company?.name ?? "")} &middot; ${esc(
+      selectedCountry?.name ?? "All Countries",
+    )} &middot; ${esc(new Date().toLocaleDateString())}</div>
+
+  <h2>Summary</h2>
+  <div class="metrics">${metricCards}</div>
+
+  <h2>Audits</h2>
+  <table>
+    <thead><tr>
+      <th>Audit ID</th><th>Area / Process</th><th>Audit Name</th><th>Control</th>
+      <th>Frequency</th><th>Lead</th><th>Recipient</th><th>Open</th>
+    </tr></thead>
+    <tbody>${summaryRows}</tbody>
+  </table>
+
+  ${auditSections}
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast({
+        title: "Popup blocked",
+        description: "Allow popups to export the report as PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -528,9 +710,21 @@ const Audit = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => exportToCSV(csvRows, "audits")}>
-            <Download className="w-4 h-4 mr-1" /> Export CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={audits.length === 0}>
+                <Download className="w-4 h-4 mr-1" /> Generate Report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => exportToCSV(csvRows, "audits")}>
+                Download CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                Download PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {!isResponder && (
             <Button onClick={openAdd}>
               <Plus className="w-4 h-4 mr-1" /> New Audit
