@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
@@ -371,13 +372,13 @@ const MonthlyReport = () => {
 
   const resultColor = (result: string) => {
     if (result === "pass") return "text-green-600";
-    if (result === "exception") return "text-yellow-600";
+    if (result === "exception") return "text-yellow-800";
     return "text-red-600";
   };
 
   const severityColor = (severity: string) => {
     if (severity === "high") return "text-red-600";
-    if (severity === "medium") return "text-yellow-600";
+    if (severity === "medium") return "text-yellow-800";
     return "text-green-600";
   };
 
@@ -459,7 +460,7 @@ const MonthlyReport = () => {
                 title="EXCEPTIONS"
                 value={report.metrics.exceptionCount}
                 borderColor="border-yellow-500"
-                textColor="text-yellow-600"
+                textColor="text-yellow-700"
               />
               <StatCard
                 title="FAIL"
@@ -471,7 +472,7 @@ const MonthlyReport = () => {
                 title="PASS RATE"
                 value={`${report.metrics.passRate}%`}
                 borderColor="border-yellow-400"
-                textColor="text-yellow-600"
+                textColor="text-yellow-700"
               />
             </div>
 
@@ -508,7 +509,7 @@ const MonthlyReport = () => {
                           <span className="text-muted-foreground">
                             Exceptions
                           </span>
-                          <span className="text-yellow-600 font-medium">
+                          <span className="text-yellow-800 font-medium">
                             {d.exceptionCount}
                           </span>
                         </div>
@@ -701,16 +702,24 @@ const MonthlyReport = () => {
             <div className="space-y-2">
               <h2 className="text-sm font-semibold mb-2">Recommendations</h2>
               {report.recommendations.length === 0 && (
-                <div className="bg-green-50 border-l-4 border-green-600 p-3 text-xs">
-                  ✅ All controls are performing well.
+                <div className="bg-green-50 border-l-4 border-green-600 p-3 text-xs flex items-start gap-2">
+                  <CheckCircle2
+                    className="w-4 h-4 shrink-0 mt-px text-green-700"
+                    aria-hidden="true"
+                  />
+                  <span>All controls are performing well.</span>
                 </div>
               )}
               {report.recommendations.map((rec, idx) => (
                 <div
                   key={idx}
-                  className="bg-yellow-50 border-l-4 border-yellow-500 p-3 text-xs"
+                  className="bg-yellow-50 border-l-4 border-yellow-500 p-3 text-xs flex items-start gap-2"
                 >
-                  {rec}
+                  <AlertTriangle
+                    className="w-4 h-4 shrink-0 mt-px text-yellow-800"
+                    aria-hidden="true"
+                  />
+                  <span>{rec}</span>
                 </div>
               ))}
             </div>

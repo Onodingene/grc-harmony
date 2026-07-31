@@ -96,7 +96,7 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
               </div>
             ))
           ) : (
-            <div className="text-sm text-gray-400 py-12 text-center border border-dashed border-gray-200 rounded-xl">
+            <div className="text-sm text-muted-foreground py-12 text-center border border-dashed border-gray-200 rounded-xl">
               No controls scheduled this month
             </div>
           )}
@@ -109,9 +109,10 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
             style={{ width: 20 }}
           >
             <button
+              aria-label="Scroll up"
               onClick={() => setScrollIndex((i) => Math.max(0, i - 1))}
               disabled={scrollIndex === 0}
-              className="text-gray-400 hover:text-gray-600 disabled:opacity-40 transition-colors"
+              className="p-1.5 -m-0.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors"
             >
               <ChevronUp size={16} />
             </button>
@@ -125,9 +126,10 @@ const MonthCard = ({ data }: { data: CalendarMonth }) => {
               />
             </div>
             <button
+              aria-label="Scroll down"
               onClick={() => setScrollIndex((i) => Math.min(maxScroll, i + 1))}
               disabled={scrollIndex >= maxScroll}
-              className="text-gray-400 hover:text-gray-600 disabled:opacity-40 transition-colors"
+              className="p-1.5 -m-0.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors"
             >
               <ChevronDown size={16} />
             </button>
@@ -175,7 +177,7 @@ const CalendarPage = () => {
             <p className="text-gray-500 mt-1">
               Controls scheduled for testing based on their audit frequency
               {calendarData && (
-                <span className="ml-2 text-xs text-gray-400">
+                <span className="ml-2 text-xs text-muted-foreground">
                   — FY starts in {calendarData.financialYearStart}
                 </span>
               )}
@@ -185,15 +187,17 @@ const CalendarPage = () => {
           {/* Year selector */}
           <div className="flex items-center gap-2">
             <button
+              aria-label="Previous year"
               onClick={() => setYear((y) => y - 1)}
-              className="px-3 py-1 rounded-md border text-sm hover:bg-gray-50"
+              className="px-3 min-h-8 rounded-md border text-sm hover:bg-gray-50"
             >
               ‹
             </button>
             <span className="text-sm font-medium w-12 text-center">{year}</span>
             <button
+              aria-label="Next year"
               onClick={() => setYear((y) => y + 1)}
-              className="px-3 py-1 rounded-md border text-sm hover:bg-gray-50"
+              className="px-3 min-h-8 rounded-md border text-sm hover:bg-gray-50"
             >
               ›
             </button>
@@ -231,7 +235,7 @@ const CalendarPage = () => {
       </div>
 
       {!loading && !calendarData && (
-        <div className="text-center py-24 text-gray-400">
+        <div className="text-center py-24 text-muted-foreground">
           No controls scheduled for {year}.
         </div>
       )}

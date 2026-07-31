@@ -614,15 +614,15 @@ const Audit = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => openDetail(a)}>
+                        <Button aria-label="View audit detail" size="sm" variant="ghost" onClick={() => openDetail(a)}>
                           <FileText className="w-4 h-4" />
                         </Button>
                         {!isResponder && (
                           <>
-                            <Button size="sm" variant="ghost" onClick={() => openEdit(a)}>
+                            <Button aria-label="Edit audit" size="sm" variant="ghost" onClick={() => openEdit(a)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => remove(a)}>
+                            <Button aria-label="Delete audit" size="sm" variant="ghost" onClick={() => remove(a)}>
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </>

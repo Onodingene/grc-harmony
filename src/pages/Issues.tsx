@@ -559,6 +559,7 @@ const Issues = () => {
                   <Button
                     size="sm"
                     variant="outline"
+                    aria-label="Edit issue notes"
                     onClick={() => {
                       setSelectedIssue(i);
                       setEditNotes(i.description);

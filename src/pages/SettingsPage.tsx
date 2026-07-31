@@ -566,7 +566,7 @@ const SettingsPage = () => {
                       >
                         <Edit className="w-3 h-3 mr-1" /> Role
                       </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {
@@ -658,7 +658,7 @@ const SettingsPage = () => {
                       >
                         <Edit className="w-3 h-3 mr-1" /> Edit
                       </Button>
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {
@@ -732,7 +732,7 @@ const SettingsPage = () => {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.code}</TableCell>
                     <TableCell className="text-right">
-                      <Button
+                      <Button aria-label="Delete"
                         size="sm"
                         variant="destructive"
                         onClick={() => {

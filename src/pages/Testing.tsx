@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus, Paperclip, X, Pencil } from "lucide-react";
+import { Download, Plus, Paperclip, X, Pencil, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
@@ -525,7 +525,7 @@ const Testing = () => {
                   {!isOwnerView && (
                     <TableCell>
                       {canEdit(t) ? (
-                        <Button
+                        <Button aria-label="Edit test"
                           size="sm"
                           variant="ghost"
                           onClick={() => openEdit(t)}
@@ -777,6 +777,7 @@ const Testing = () => {
                       <button
                         type="button"
                         aria-label={`Remove ${file.name}`}
+                        aria-label="Remove file"
                         className="shrink-0 text-muted-foreground hover:text-destructive"
                         onClick={() =>
                           setEvidenceFiles((prev) =>
@@ -799,9 +800,12 @@ const Testing = () => {
             </div>
 
             {form.result !== "pass" && (
-              <div className="col-span-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
-                ⚠ An issue will be automatically created for this {form.result}{" "}
-                result.
+              <div className="col-span-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>
+                  An issue will be automatically created for this {form.result}{" "}
+                  result.
+                </span>
               </div>
             )}
           </div>
