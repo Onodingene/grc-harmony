@@ -280,7 +280,7 @@ const Controls = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-auto">
-        <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+        <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Control ID</TableHead>

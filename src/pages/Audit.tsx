@@ -26,10 +26,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Download, Pencil, Trash2, Paperclip, FileText } from "lucide-react";
+import {
+  Plus,
+  Download,
+  Pencil,
+  Trash2,
+  Paperclip,
+  FileText,
+  Send,
+  MessageSquare,
+} from "lucide-react";
 import { exportToCSV } from "@/lib/csv-export";
 import { apiFetch, getAccessToken } from "@/lib/api";
 import { useCountryStore } from "@/lib/countryStore";
+import { useAuthStore } from "@/lib/authStore";
 import { useToast } from "@/hooks/use-toast";
 import { openEvidence } from "@/lib/evidence";
 
@@ -42,6 +52,23 @@ interface FailedControl {
   frequency: string;
   countryId: string;
   failedTestCount: number;
+}
+
+interface Member {
+  id: string;
+  fullName: string | null;
+  email: string;
+  role: string;
+}
+
+interface AuditCommentRecord {
+  id: string;
+  message: string;
+  period: string | null;
+  isRequest: boolean;
+  evidenceUrls: string[];
+  createdAt: string;
+  author?: { id: string; fullName: string | null; email: string } | null;
 }
 
 interface AuditIssueRecord {
@@ -84,6 +111,8 @@ interface AuditRecord {
   startMonth: string;
   dueDay: number;
   frequency: string;
+  recipient: { id: string; fullName: string | null; email: string } | null;
+  comments: AuditCommentRecord[];
   control: {
     id: string;
     controlId: string;
@@ -127,14 +156,23 @@ const emptyForm = {
   procedures: "",
   startMonth: "",
   dueDay: "15",
+  recipientId: "",
 };
+
+const NO_RECIPIENT = "__none__";
 
 const Audit = () => {
   const { selectedCountry } = useCountryStore();
+  const { user } = useAuthStore();
   const { toast } = useToast();
+
+  // Control owners are responders: they see only audits addressed to them and
+  // can reply / upload, but never create or edit.
+  const isResponder = user?.role === "control_owner";
 
   const [audits, setAudits] = useState<AuditRecord[]>([]);
   const [failedControls, setFailedControls] = useState<FailedControl[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -147,17 +185,29 @@ const Audit = () => {
   const [uploading, setUploading] = useState(false);
   const [issueText, setIssueText] = useState("");
   const [issueSeverity, setIssueSeverity] = useState("medium");
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
 
   const countryId = selectedCountry?.id ?? "all";
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [auditRes, controlsRes] = await Promise.all([
+    // Responders can only read their own audits — the picker endpoints are
+    // auditor-only, so don't call them.
+    const [auditRes, controlsRes, membersRes] = await Promise.all([
       apiFetch<AuditRecord[]>(`/audit?country_id=${countryId}`),
-      apiFetch<FailedControl[]>(`/audit/failed-controls?country_id=${countryId}`),
+      isResponder
+        ? Promise.resolve({ data: null, error: null })
+        : apiFetch<FailedControl[]>(
+            `/audit/failed-controls?country_id=${countryId}`,
+          ),
+      isResponder
+        ? Promise.resolve({ data: null, error: null })
+        : apiFetch<Member[]>(`/audit/recipients`),
     ]);
     if (auditRes.data) setAudits(auditRes.data);
     if (controlsRes.data) setFailedControls(controlsRes.data);
+    if (membersRes.data) setMembers(membersRes.data);
     if (auditRes.error) {
       toast({
         title: "Could not load audits",
@@ -166,7 +216,7 @@ const Audit = () => {
       });
     }
     setLoading(false);
-  }, [countryId, toast]);
+  }, [countryId, toast, isResponder]);
 
   useEffect(() => {
     load();
@@ -207,6 +257,7 @@ const Audit = () => {
       procedures: a.procedures ?? "",
       startMonth: a.startMonth,
       dueDay: String(a.dueDay),
+      recipientId: a.recipient?.id ?? "",
     });
     setFormOpen(true);
   };
@@ -236,6 +287,7 @@ const Audit = () => {
       procedures: form.procedures,
       startMonth: form.startMonth,
       dueDay: Number(form.dueDay),
+      recipientId: form.recipientId || null,
       ...(editing ? {} : { controlId: form.controlId }),
     };
 
@@ -290,6 +342,61 @@ const Audit = () => {
     setDetailPeriod(a.duePeriods[0]?.period ?? "");
     setIssueText("");
     setIssueSeverity("medium");
+    setCommentText("");
+  };
+
+  // Posting as a request is what emails the recipient; a plain comment doesn't.
+  const postComment = async (asRequest: boolean) => {
+    if (!detail) return;
+    if (!commentText.trim()) {
+      toast({ title: "Write a message first", variant: "destructive" });
+      return;
+    }
+    if (asRequest && !detail.recipient) {
+      toast({
+        title: "No recipient set",
+        description: "Edit the audit and choose who should respond.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingComment(true);
+    const res = await apiFetch<{ emailSent?: boolean; emailError?: string }>(
+      `/audit/${detail.id}/comments`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          message: commentText,
+          period: detailPeriod || undefined,
+          isRequest: asRequest,
+        }),
+      },
+    );
+    setSendingComment(false);
+
+    if (res.error) {
+      toast({
+        title: "Could not post",
+        description: res.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (asRequest) {
+      toast({
+        title: res.data?.emailSent
+          ? `Request emailed to ${detail.recipient?.email}`
+          : "Request posted, but the email failed",
+        description: res.data?.emailSent ? undefined : res.data?.emailError,
+        variant: res.data?.emailSent ? undefined : "destructive",
+      });
+    } else {
+      toast({ title: "Comment added" });
+    }
+    setCommentText("");
+    load();
   };
 
   const currentPeriodRow = useMemo(() => {
@@ -400,6 +507,7 @@ const Audit = () => {
     control: a.control.controlId,
     frequency: FREQUENCY_LABELS[a.frequency] ?? a.frequency,
     lead: a.lead ?? "",
+    recipient: a.recipient?.email ?? "",
     startMonth: a.startMonth,
     dueDay: a.dueDay,
     openIssues: a.periods.reduce(
@@ -414,22 +522,25 @@ const Audit = () => {
         <div>
           <h1 className="text-2xl font-bold">Audit</h1>
           <p className="text-muted-foreground text-sm">
-            Audits raised against controls with failed tests. Each audit follows
-            its control's testing schedule.
+            {isResponder
+              ? "Audit requests sent to you. Reply and upload the documents requested."
+              : "Audits raised against controls. Each audit follows its control's testing schedule."}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportToCSV(csvRows, "audits")}>
             <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
-          <Button onClick={openAdd}>
-            <Plus className="w-4 h-4 mr-1" /> New Audit
-          </Button>
+          {!isResponder && (
+            <Button onClick={openAdd}>
+              <Plus className="w-4 h-4 mr-1" /> New Audit
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="rounded-lg border bg-card overflow-x-auto">
-        <Table className="min-w-[1200px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+        <Table className="min-w-[1200px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>Audit ID</TableHead>
@@ -438,6 +549,7 @@ const Audit = () => {
               <TableHead>Control</TableHead>
               <TableHead>Frequency</TableHead>
               <TableHead>Lead</TableHead>
+              <TableHead>Recipient</TableHead>
               <TableHead>Start</TableHead>
               <TableHead>Open Issues</TableHead>
               <TableHead>Actions</TableHead>
@@ -446,14 +558,16 @@ const Audit = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Loading audits…
                 </TableCell>
               </TableRow>
             ) : audits.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                  No audits yet. Raise one against a control that has failed tests.
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  {isResponder
+                    ? "No audit requests have been sent to you."
+                    : "No audits yet. Raise one against any control."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -483,6 +597,11 @@ const Audit = () => {
                       {FREQUENCY_LABELS[a.frequency] ?? a.frequency}
                     </TableCell>
                     <TableCell>{a.lead || "—"}</TableCell>
+                    <TableCell className="whitespace-normal min-w-[140px] max-w-[220px]">
+                      {a.recipient
+                        ? (a.recipient.fullName ?? a.recipient.email)
+                        : "—"}
+                    </TableCell>
                     <TableCell>
                       {a.startMonth} · day {a.dueDay}
                     </TableCell>
@@ -498,12 +617,16 @@ const Audit = () => {
                         <Button size="sm" variant="ghost" onClick={() => openDetail(a)}>
                           <FileText className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(a)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => remove(a)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        {!isResponder && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => openEdit(a)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => remove(a)}>
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -619,6 +742,32 @@ const Audit = () => {
             </div>
 
             <div className="grid gap-1.5">
+              <Label>Recipient</Label>
+              <Select
+                value={form.recipientId || NO_RECIPIENT}
+                onValueChange={(v) =>
+                  set("recipientId", v === NO_RECIPIENT ? "" : v)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Who should respond to this audit?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_RECIPIENT}>No recipient</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.fullName ?? m.email} ({m.role.replace("_", " ")})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                They'll see this audit in their own Audit tab. They're emailed
+                only when you send a request.
+              </p>
+            </div>
+
+            <div className="grid gap-1.5">
               <Label>Procedures / Test Steps</Label>
               <Textarea
                 rows={3}
@@ -692,6 +841,15 @@ const Audit = () => {
               <div className="text-sm text-muted-foreground">
                 Control {detail.control.controlId} · {detail.control.name} ·{" "}
                 {FREQUENCY_LABELS[detail.frequency] ?? detail.frequency}
+                {detail.recipient && (
+                  <>
+                    {" · "}
+                    <span>
+                      Recipient:{" "}
+                      {detail.recipient.fullName ?? detail.recipient.email}
+                    </span>
+                  </>
+                )}
               </div>
 
               <div className="grid gap-1.5">
@@ -751,6 +909,91 @@ const Audit = () => {
                 )}
               </div>
 
+              {/* Conversation — requests and replies */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4" /> Conversation
+                </Label>
+
+                {detail.comments.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {detail.comments.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`rounded border p-2 space-y-1 ${
+                          c.isRequest ? "border-primary/40 bg-primary/5" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">
+                            {c.author?.fullName ?? c.author?.email ?? "Unknown"}
+                          </span>
+                          {c.isRequest && (
+                            <Badge className="bg-primary/15 text-primary">
+                              Request
+                            </Badge>
+                          )}
+                          {c.period && <span>· {c.period}</span>}
+                          <span className="ml-auto">
+                            {new Date(c.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {c.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No messages yet.
+                  </p>
+                )}
+
+                <div className="rounded border p-2 space-y-2">
+                  <Textarea
+                    rows={2}
+                    placeholder={
+                      isResponder
+                        ? "Reply to this request…"
+                        : "Write a message, or request documents from the recipient…"
+                    }
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                  />
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => postComment(false)}
+                      disabled={sendingComment}
+                    >
+                      {isResponder ? "Reply" : "Add Comment"}
+                    </Button>
+                    {!isResponder && (
+                      <Button
+                        size="sm"
+                        onClick={() => postComment(true)}
+                        disabled={sendingComment || !detail.recipient}
+                        title={
+                          detail.recipient
+                            ? `Emails ${detail.recipient.email}`
+                            : "Set a recipient first"
+                        }
+                      >
+                        <Send className="w-4 h-4 mr-1" />
+                        {sendingComment ? "Sending…" : "Send Request"}
+                      </Button>
+                    )}
+                  </div>
+                  {!isResponder && (
+                    <p className="text-xs text-muted-foreground">
+                      "Send Request" emails the recipient. "Add Comment" doesn't.
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Issues */}
               <div className="space-y-2">
                 <Label>Audit Issues</Label>
@@ -766,19 +1009,21 @@ const Audit = () => {
                           <Badge className={statusColors[i.status]}>
                             {i.status.replace("_", " ")}
                           </Badge>
-                          <Select
-                            value={i.status}
-                            onValueChange={(v) => setIssueStatus(i, v)}
-                          >
-                            <SelectTrigger className="h-7 w-[130px] ml-auto">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="open">Open</SelectItem>
-                              <SelectItem value="in_progress">In progress</SelectItem>
-                              <SelectItem value="closed">Closed</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          {!isResponder && (
+                            <Select
+                              value={i.status}
+                              onValueChange={(v) => setIssueStatus(i, v)}
+                            >
+                              <SelectTrigger className="h-7 w-[130px] ml-auto">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="open">Open</SelectItem>
+                                <SelectItem value="in_progress">In progress</SelectItem>
+                                <SelectItem value="closed">Closed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <p className="text-sm">{i.description}</p>
                         {i.evidenceUrls.length > 0 && (
@@ -803,29 +1048,31 @@ const Audit = () => {
                   </p>
                 )}
 
-                <div className="rounded border p-2 space-y-2">
-                  <Textarea
-                    rows={2}
-                    placeholder="Describe the audit issue…"
-                    value={issueText}
-                    onChange={(e) => setIssueText(e.target.value)}
-                  />
-                  <div className="flex gap-2">
-                    <Select value={issueSeverity} onValueChange={setIssueSeverity}>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" onClick={raiseIssue} disabled={!detailPeriod}>
-                      Raise Issue
-                    </Button>
+                {!isResponder && (
+                  <div className="rounded border p-2 space-y-2">
+                    <Textarea
+                      rows={2}
+                      placeholder="Describe the audit issue…"
+                      value={issueText}
+                      onChange={(e) => setIssueText(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Select value={issueSeverity} onValueChange={setIssueSeverity}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" onClick={raiseIssue} disabled={!detailPeriod}>
+                        Raise Issue
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}

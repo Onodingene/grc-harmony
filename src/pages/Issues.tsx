@@ -456,7 +456,7 @@ const Issues = () => {
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
-        <Table className="min-w-[1400px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+        <Table className="min-w-[1400px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
           <TableHeader>
             <TableRow className="bg-primary/10">
               <TableHead>RAG</TableHead>

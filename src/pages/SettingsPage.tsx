@@ -527,7 +527,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Name</TableHead>
@@ -616,7 +616,7 @@ const SettingsPage = () => {
           />
 
           <div className="border rounded-lg overflow-hidden">
-            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:whitespace-nowrap">
+            <Table className="min-w-[1100px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
               <TableHeader>
                 <TableRow className="bg-primary/10">
                   <TableHead>Control ID</TableHead>

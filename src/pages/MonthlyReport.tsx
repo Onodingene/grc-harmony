@@ -92,6 +92,21 @@ interface MonthlyReportData {
 // trailing /api so evidence links resolve to the static file route.
 const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/api\/?$/, "");
 
+// Testing is carried out one month after the activity it covers, so the work
+// stored under period YYYY-MM is reported as the month before it. Only the
+// label shifts — the stored period, and the test dates, are untouched.
+const reportLabelFor = (period: string) => {
+  const [yearStr, monthStr] = period.split("-");
+  const year = parseInt(yearStr ?? "", 10);
+  const monthNum = parseInt(monthStr ?? "", 10);
+  if (isNaN(year) || isNaN(monthNum)) return period;
+  // monthNum - 2 because the Date month index is zero-based.
+  return new Date(year, monthNum - 2, 1).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
 // Generate last 12 months as options
 const generateMonthOptions = () => {
   const options: { label: string; value: string }[] = [];
@@ -100,11 +115,8 @@ const generateMonthOptions = () => {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
-    const label = date.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-    options.push({ label, value: `${year}-${month}` });
+    const value = `${year}-${month}`;
+    options.push({ label: reportLabelFor(value), value });
   }
   return options;
 };
@@ -199,7 +211,7 @@ const MonthlyReport = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `report-${month}.csv`;
+    a.download = `report-${reportLabelFor(month).replace(/\s+/g, "-").toLowerCase()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -281,7 +293,7 @@ const MonthlyReport = () => {
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Monthly Test Report - ${esc(report.period)}</title>
+<title>Monthly Test Report - ${esc(reportLabelFor(report.period))}</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 32px; }
@@ -292,9 +304,12 @@ const MonthlyReport = () => {
   .metric { border: 1px solid #e5e5e5; border-left: 4px solid #f9d75c; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
   .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
   .metric-value { display: block; font-size: 18px; font-weight: bold; }
-  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+  /* Fixed layout + wrapping keeps long descriptions inside their column
+     instead of running off the page and over the next one. */
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
   th { background: #f9d75c; text-align: left; padding: 6px; }
   td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th, td { word-wrap: break-word; overflow-wrap: anywhere; }
   .empty { text-align: center; color: #888; padding: 16px; }
   ul { font-size: 12px; padding-left: 18px; }
   @media print { body { margin: 12px; } }
@@ -303,7 +318,7 @@ const MonthlyReport = () => {
 <body>
   <h1>Monthly Test Report</h1>
   <div class="period">${esc(report.company)} &middot; ${esc(
-      report.period
+      reportLabelFor(report.period)
     )}</div>
 
   <h2>Summary</h2>
@@ -534,7 +549,7 @@ const MonthlyReport = () => {
                 Detailed Test Results
               </h2>
               <div className="overflow-x-auto">
-                <table className="min-w-[1400px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:whitespace-nowrap">
+                <table className="min-w-[1400px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:break-words">
                   <thead className="bg-[#f9d75c] text-left">
                     <tr>
                       <th className="p-2">Test Date</th>
@@ -625,7 +640,7 @@ const MonthlyReport = () => {
             <div>
               <h2 className="text-sm font-semibold mb-2">Issues Identified</h2>
               <div className="overflow-x-auto">
-                <table className="min-w-[1000px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:whitespace-nowrap">
+                <table className="min-w-[1000px] w-full text-xs text-left [&_th]:whitespace-nowrap [&_th]:p-2 [&_td]:p-2 [&_td]:align-top [&_td]:break-words">
                 <thead className="bg-[#f9d75c] text-left">
                   <tr>
                     <th className="p-2">Issue ID</th>
