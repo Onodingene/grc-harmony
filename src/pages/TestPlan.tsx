@@ -33,7 +33,7 @@ interface TestPlanRow {
   owner: { id: string; fullName: string; email: string };
   assignedTester: { id: string; fullName: string; email: string } | null;
   dueDate: string;
-  status: "pending" | "pass" | "exception" | "fail";
+  status: "pending" | "pass" | "fail";
   testResult: {
     population: number;
     sampleSize: number;
@@ -49,8 +49,6 @@ const statusColor = (s: string) => {
       return "bg-green-100 text-green-800 border-green-300";
     case "fail":
       return "bg-red-100 text-red-800 border-red-300";
-    case "exception":
-      return "bg-orange-100 text-orange-800 border-orange-300";
     default:
       return "bg-yellow-100 text-yellow-800 border-yellow-300";
   }
@@ -214,7 +212,7 @@ const TestPlan = () => {
                 "Due Date",
                 "Population",
                 "Sample",
-                "Exceptions",
+                "Failed Items",
                 "Status",
               ].map((h) => (
                 <TableHead

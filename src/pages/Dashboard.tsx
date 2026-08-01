@@ -114,10 +114,10 @@ const Dashboard = () => {
           link: "/testing",
         },
         {
-          label: "Exceptions",
+          label: "Failed Items",
           value: String(data.exceptionCount ?? 0),
           icon: XCircle,
-          trend: `${data.failCount ?? 0} failed this period`,
+          trend: `${data.failCount ?? 0} tests failed this period`,
           link: "/testing",
         },
         {
@@ -161,10 +161,10 @@ const Dashboard = () => {
           link: "/testing",
         },
         {
-          label: "Exceptions",
+          label: "Failed Items",
           value: String(data.exceptionCount ?? 0),
           icon: XCircle,
-          trend: `${data.failCount ?? 0} failed this period`,
+          trend: `${data.failCount ?? 0} tests failed this period`,
           link: "/testing",
         },
         {
@@ -187,10 +187,10 @@ const Dashboard = () => {
           link: "/testing",
         },
         {
-          label: "Exceptions",
+          label: "Failed Items",
           value: String(data.exceptionCount ?? 0),
           icon: XCircle,
-          trend: `${data.failCount ?? 0} failed this period`,
+          trend: `${data.failCount ?? 0} tests failed this period`,
           link: "/testing",
         },
         {
@@ -250,10 +250,10 @@ const Dashboard = () => {
           link: "/testing",
         },
         {
-          label: "Exceptions",
+          label: "Failed Items",
           value: String(data.exceptionCount ?? 0),
           icon: XCircle,
-          trend: `${data.failCount ?? 0} failed this period`,
+          trend: `${data.failCount ?? 0} tests failed this period`,
           link: "/testing",
         },
         {

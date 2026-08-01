@@ -60,7 +60,7 @@ interface DetailedResult {
   testProcedure: string | null;
   sampleSize: number;
   exceptions: number;
-  result: "pass" | "exception" | "fail";
+  result: "pass" | "fail";
   evidenceUrl: string | null;
   evidenceUrls: string[];
   comments: string | null;
@@ -188,7 +188,7 @@ const MonthlyReport = () => {
         "Tester",
         "Test Procedure",
         "Sample Size",
-        "Exceptions",
+        "Failed Items",
         "Result",
         "Comment",
         "Recommendation",
@@ -233,7 +233,7 @@ const MonthlyReport = () => {
     const metricCards = [
       { label: "Total Tests", value: m.totalTests },
       { label: "Pass", value: m.passCount },
-      { label: "Exceptions", value: m.exceptionCount },
+      { label: "Failed Items", value: m.exceptionCount },
       { label: "Fail", value: m.failCount },
       { label: "Pass Rate", value: `${m.passRate}%` },
       { label: "Coverage", value: `${m.coverage}%` },
@@ -330,7 +330,7 @@ const MonthlyReport = () => {
     <thead>
       <tr>
         <th>Test Date</th><th>Control ID</th><th>Control Description</th>
-        <th>Domain</th><th>Tester</th><th>Test Procedure</th><th>Sample Size</th><th>Exceptions</th>
+        <th>Domain</th><th>Tester</th><th>Test Procedure</th><th>Sample Size</th><th>Failed Items</th>
         <th>Result</th><th>Comment</th><th>Recommendation</th>
       </tr>
     </thead>
@@ -372,7 +372,6 @@ const MonthlyReport = () => {
 
   const resultColor = (result: string) => {
     if (result === "pass") return "text-green-600";
-    if (result === "exception") return "text-yellow-800";
     return "text-red-600";
   };
 
@@ -457,7 +456,7 @@ const MonthlyReport = () => {
                 textColor="text-green-600"
               />
               <StatCard
-                title="EXCEPTIONS"
+                title="FAILED ITEMS"
                 value={report.metrics.exceptionCount}
                 borderColor="border-yellow-500"
                 textColor="text-yellow-700"
@@ -507,7 +506,7 @@ const MonthlyReport = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">
-                            Exceptions
+                            Failed Items
                           </span>
                           <span className="text-yellow-800 font-medium">
                             {d.exceptionCount}
@@ -559,7 +558,7 @@ const MonthlyReport = () => {
                     <col className="w-[140px]" /> {/* Tester */}
                     <col className="w-[260px]" /> {/* Test Procedure */}
                     <col className="w-[80px]" />  {/* Sample Size */}
-                    <col className="w-[80px]" />  {/* Exceptions */}
+                    <col className="w-[80px]" />  {/* Failed Items */}
                     <col className="w-[80px]" />  {/* Result */}
                     <col className="w-[240px]" /> {/* Evidence & Comment */}
                     <col className="w-[240px]" /> {/* Recommendation */}
@@ -573,7 +572,7 @@ const MonthlyReport = () => {
                       <th className="whitespace-nowrap">Tester</th>
                       <th>Test Procedure</th>
                       <th className="whitespace-nowrap">Sample Size</th>
-                      <th className="whitespace-nowrap">Exceptions</th>
+                      <th className="whitespace-nowrap">Failed Items</th>
                       <th className="whitespace-nowrap">Result</th>
                       <th>Evidence &amp; Comment</th>
                       <th>Recommendation</th>
