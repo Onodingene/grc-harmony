@@ -104,6 +104,18 @@ interface DuePeriod {
   dueDate: string;
 }
 
+interface LinkedRequest {
+  id: string;
+  requestId: string;
+  subject: string;
+  message: string;
+  period: string;
+  dueDate: string | null;
+  status: string;
+  createdAt: string;
+  recipient: { id: string; fullName: string | null; email: string } | null;
+}
+
 interface AuditRecord {
   id: string;
   auditId: string;
@@ -112,13 +124,13 @@ interface AuditRecord {
   objectives: string | null;
   scope: string | null;
   keyRisks: string | null;
-  lead: string | null;
   procedures: string | null;
   startMonth: string;
   dueDay: number;
   frequency: string;
   recipient: { id: string; fullName: string | null; email: string } | null;
   comments: AuditCommentRecord[];
+  requests: LinkedRequest[];
   control: {
     id: string;
     controlId: string;
@@ -145,6 +157,12 @@ const severityColors: Record<string, string> = {
   high: "bg-red-100 text-red-800",
 };
 
+const requestStatusColors: Record<string, string> = {
+  open: "bg-yellow-100 text-yellow-800",
+  responded: "bg-blue-100 text-blue-800",
+  closed: "bg-green-100 text-green-800",
+};
+
 const statusColors: Record<string, string> = {
   open: "bg-red-100 text-red-800",
   in_progress: "bg-blue-100 text-blue-800",
@@ -158,7 +176,6 @@ const emptyForm = {
   objectives: "",
   scope: "",
   keyRisks: "",
-  lead: "",
   procedures: "",
   startMonth: "",
   dueDay: "15",
@@ -192,6 +209,7 @@ const Audit = () => {
   const [issueText, setIssueText] = useState("");
   const [issueSeverity, setIssueSeverity] = useState("medium");
   const [commentText, setCommentText] = useState("");
+  const [requestDueDate, setRequestDueDate] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
   const countryId = selectedCountry?.id ?? "all";
@@ -259,7 +277,6 @@ const Audit = () => {
       objectives: a.objectives ?? "",
       scope: a.scope ?? "",
       keyRisks: a.keyRisks ?? "",
-      lead: a.lead ?? "",
       procedures: a.procedures ?? "",
       startMonth: a.startMonth,
       dueDay: String(a.dueDay),
@@ -289,7 +306,6 @@ const Audit = () => {
       objectives: form.objectives,
       scope: form.scope,
       keyRisks: form.keyRisks,
-      lead: form.lead,
       procedures: form.procedures,
       startMonth: form.startMonth,
       dueDay: Number(form.dueDay),
@@ -349,6 +365,7 @@ const Audit = () => {
     setIssueText("");
     setIssueSeverity("medium");
     setCommentText("");
+    setRequestDueDate("");
   };
 
   // Posting as a request is what emails the recipient; a plain comment doesn't.
@@ -376,6 +393,7 @@ const Audit = () => {
           message: commentText,
           period: detailPeriod || undefined,
           isRequest: asRequest,
+          ...(asRequest && requestDueDate ? { dueDate: requestDueDate } : {}),
         }),
       },
     );
@@ -402,6 +420,7 @@ const Audit = () => {
       toast({ title: "Comment added" });
     }
     setCommentText("");
+    setRequestDueDate("");
     load();
   };
 
@@ -512,7 +531,6 @@ const Audit = () => {
     auditName: a.auditName,
     control: a.control.controlId,
     frequency: FREQUENCY_LABELS[a.frequency] ?? a.frequency,
-    lead: a.lead ?? "",
     recipient: a.recipient?.email ?? "",
     startMonth: a.startMonth,
     dueDay: a.dueDay,
@@ -576,7 +594,6 @@ const Audit = () => {
           <td>${esc(a.auditName)}</td>
           <td>${esc(a.control.controlId)}</td>
           <td>${esc(FREQUENCY_LABELS[a.frequency] ?? a.frequency)}</td>
-          <td>${esc(a.lead ?? "—")}</td>
           <td>${esc(a.recipient ? (a.recipient.fullName ?? a.recipient.email) : "—")}</td>
           <td>${esc(open)}</td>
         </tr>`;
@@ -612,7 +629,6 @@ const Audit = () => {
           ${field("Objectives", a.objectives)}
           ${field("Scope", a.scope)}
           ${field("Key Risks", a.keyRisks)}
-          ${field("Lead", a.lead)}
           ${field("Procedures / Test Steps", a.procedures)}
           ${field("Frequency", FREQUENCY_LABELS[a.frequency] ?? a.frequency)}
           ${field("Starts", `${a.startMonth} (day ${a.dueDay})`)}
@@ -673,7 +689,7 @@ const Audit = () => {
   <table>
     <thead><tr>
       <th>Audit ID</th><th>Area / Process</th><th>Audit Name</th><th>Control</th>
-      <th>Frequency</th><th>Lead</th><th>Recipient</th><th>Open</th>
+      <th>Frequency</th><th>Recipient</th><th>Open</th>
     </tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
@@ -742,7 +758,6 @@ const Audit = () => {
               <TableHead>Audit Name</TableHead>
               <TableHead>Control</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Lead</TableHead>
               <TableHead>Recipient</TableHead>
               <TableHead>Start</TableHead>
               <TableHead>Open Issues</TableHead>
@@ -752,13 +767,13 @@ const Audit = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   Loading audits…
                 </TableCell>
               </TableRow>
             ) : audits.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {isResponder
                     ? "No audit requests have been sent to you."
                     : "No audits yet. Raise one against any control."}
@@ -790,7 +805,6 @@ const Audit = () => {
                     <TableCell>
                       {FREQUENCY_LABELS[a.frequency] ?? a.frequency}
                     </TableCell>
-                    <TableCell>{a.lead || "—"}</TableCell>
                     <TableCell className="whitespace-normal min-w-[140px] max-w-[220px]">
                       {a.recipient
                         ? (a.recipient.fullName ?? a.recipient.email)
@@ -925,14 +939,6 @@ const Audit = () => {
                   The audited control can't be changed — create a new audit instead.
                 </p>
               )}
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label>Lead</Label>
-              <Input
-                value={form.lead}
-                onChange={(e) => set("lead", e.target.value)}
-              />
             </div>
 
             <div className="grid gap-1.5">
@@ -1144,6 +1150,35 @@ const Audit = () => {
                   </p>
                 )}
 
+                {detail.requests.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Requests raised on this audit (tracked in the Requests tab)
+                    </p>
+                    {detail.requests.map((r) => (
+                      <div
+                        key={r.id}
+                        className="rounded border p-2 text-sm flex items-center gap-2 flex-wrap"
+                      >
+                        <span className="font-medium">{r.requestId}</span>
+                        <Badge className={requestStatusColors[r.status]}>
+                          {r.status}
+                        </Badge>
+                        {r.dueDate && (
+                          <span className="text-xs text-muted-foreground">
+                            needed by {new Date(r.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {r.recipient
+                            ? (r.recipient.fullName ?? r.recipient.email)
+                            : "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="rounded border p-2 space-y-2">
                   <Textarea
                     rows={2}
@@ -1155,6 +1190,22 @@ const Audit = () => {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                   />
+                  {!isResponder && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap">
+                        Needed by
+                      </Label>
+                      <Input
+                        type="date"
+                        className="h-8 w-[170px]"
+                        value={requestDueDate}
+                        onChange={(e) => setRequestDueDate(e.target.value)}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        used when you send a request
+                      </span>
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
                     <Button
                       size="sm"
