@@ -104,6 +104,18 @@ interface DuePeriod {
   dueDate: string;
 }
 
+interface LinkedRequest {
+  id: string;
+  requestId: string;
+  subject: string;
+  message: string;
+  period: string;
+  dueDate: string | null;
+  status: string;
+  createdAt: string;
+  recipient: { id: string; fullName: string | null; email: string } | null;
+}
+
 interface AuditRecord {
   id: string;
   auditId: string;
@@ -118,6 +130,7 @@ interface AuditRecord {
   frequency: string;
   recipient: { id: string; fullName: string | null; email: string } | null;
   comments: AuditCommentRecord[];
+  requests: LinkedRequest[];
   control: {
     id: string;
     controlId: string;
@@ -142,6 +155,12 @@ const severityColors: Record<string, string> = {
   low: "bg-secondary text-muted-foreground",
   medium: "bg-yellow-100 text-yellow-800",
   high: "bg-red-100 text-red-800",
+};
+
+const requestStatusColors: Record<string, string> = {
+  open: "bg-yellow-100 text-yellow-800",
+  responded: "bg-blue-100 text-blue-800",
+  closed: "bg-green-100 text-green-800",
 };
 
 const statusColors: Record<string, string> = {
@@ -190,6 +209,7 @@ const Audit = () => {
   const [issueText, setIssueText] = useState("");
   const [issueSeverity, setIssueSeverity] = useState("medium");
   const [commentText, setCommentText] = useState("");
+  const [requestDueDate, setRequestDueDate] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
   const countryId = selectedCountry?.id ?? "all";
@@ -345,6 +365,7 @@ const Audit = () => {
     setIssueText("");
     setIssueSeverity("medium");
     setCommentText("");
+    setRequestDueDate("");
   };
 
   // Posting as a request is what emails the recipient; a plain comment doesn't.
@@ -372,6 +393,7 @@ const Audit = () => {
           message: commentText,
           period: detailPeriod || undefined,
           isRequest: asRequest,
+          ...(asRequest && requestDueDate ? { dueDate: requestDueDate } : {}),
         }),
       },
     );
@@ -398,6 +420,7 @@ const Audit = () => {
       toast({ title: "Comment added" });
     }
     setCommentText("");
+    setRequestDueDate("");
     load();
   };
 
@@ -1127,6 +1150,35 @@ const Audit = () => {
                   </p>
                 )}
 
+                {detail.requests.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Requests raised on this audit (tracked in the Requests tab)
+                    </p>
+                    {detail.requests.map((r) => (
+                      <div
+                        key={r.id}
+                        className="rounded border p-2 text-sm flex items-center gap-2 flex-wrap"
+                      >
+                        <span className="font-medium">{r.requestId}</span>
+                        <Badge className={requestStatusColors[r.status]}>
+                          {r.status}
+                        </Badge>
+                        {r.dueDate && (
+                          <span className="text-xs text-muted-foreground">
+                            needed by {new Date(r.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {r.recipient
+                            ? (r.recipient.fullName ?? r.recipient.email)
+                            : "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="rounded border p-2 space-y-2">
                   <Textarea
                     rows={2}
@@ -1138,6 +1190,22 @@ const Audit = () => {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                   />
+                  {!isResponder && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap">
+                        Needed by
+                      </Label>
+                      <Input
+                        type="date"
+                        className="h-8 w-[170px]"
+                        value={requestDueDate}
+                        onChange={(e) => setRequestDueDate(e.target.value)}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        used when you send a request
+                      </span>
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
                     <Button
                       size="sm"

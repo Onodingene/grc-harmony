@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -26,7 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Plus, Paperclip, X, Pencil, AlertTriangle } from "lucide-react";
+import {
+  Download,
+  Plus,
+  Paperclip,
+  X,
+  Pencil,
+  AlertTriangle,
+  Send,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
@@ -101,6 +110,7 @@ const Testing = () => {
   const { toast } = useToast();
   const { selectedCountry } = useCountryStore();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   // Control owners get a read-only view of testing on the controls they own.
   const isOwnerView = user?.role === "control_owner";
@@ -418,6 +428,15 @@ const Testing = () => {
           </Button>
 
           {!isOwnerView && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/requests?period=${selectedMonth}`)}
+            >
+              <Send className="w-4 h-4 mr-1" /> Request Document
+            </Button>
+          )}
+
+          {!isOwnerView && (
             <Button onClick={openAdd} disabled={availableControls.length === 0}>
               <Plus className="w-4 h-4 mr-1" /> Record New Test
             </Button>
@@ -672,7 +691,16 @@ const Testing = () => {
                 min={0}
                 value={form.exceptions}
                 onChange={(e) =>
-                  setForm({ ...form, exceptions: Number(e.target.value) })
+                  setForm((prev) => {
+                    const n = Number(e.target.value);
+                    // A test with failures cannot be a Pass, so move it for them
+                    // rather than leaving the form in a state that won't save.
+                    return {
+                      ...prev,
+                      exceptions: n,
+                      result: n > 0 ? "fail" : prev.result,
+                    };
+                  })
                 }
               />
             </div>
@@ -689,10 +717,17 @@ const Testing = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pass">Pass</SelectItem>
+                  <SelectItem value="pass" disabled={form.exceptions > 0}>
+                    Pass
+                  </SelectItem>
                   <SelectItem value="fail">Fail</SelectItem>
                 </SelectContent>
               </Select>
+              {form.exceptions > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Pass is unavailable because this test recorded failed items.
+                </p>
+              )}
             </div>
 
             <div className="col-span-2 grid gap-1.5">
@@ -879,6 +914,8 @@ const Testing = () => {
                   setEditForm((f) => ({
                     ...f,
                     exceptions: Number(e.target.value),
+                    result:
+                      Number(e.target.value) > 0 ? "fail" : f.result,
                   }))
                 }
               />
@@ -896,10 +933,17 @@ const Testing = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pass">Pass</SelectItem>
+                  <SelectItem value="pass" disabled={editForm.exceptions > 0}>
+                    Pass
+                  </SelectItem>
                   <SelectItem value="fail">Fail</SelectItem>
                 </SelectContent>
               </Select>
+              {editForm.exceptions > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Pass is unavailable because this test recorded failed items.
+                </p>
+              )}
             </div>
 
             <div className="col-span-2 grid gap-1.5">

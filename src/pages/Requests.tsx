@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -57,6 +58,7 @@ interface DocumentRequest {
   status: "open" | "responded" | "closed";
   createdAt: string;
   control: { id: string; controlId: string; name: string; domain: string };
+  audit: { id: string; auditId: string; auditName: string } | null;
   requester: Person;
   recipient: Person;
   messages: RequestMessage[];
@@ -92,6 +94,7 @@ const Requests = () => {
   const { selectedCountry } = useCountryStore();
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Control owners respond only: they see requests addressed to them and can
   // reply, but never raise or close one.
@@ -143,6 +146,17 @@ const Requests = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Arriving from the Testing screen opens the composer straight away, with
+  // the period they were working in already filled in.
+  useEffect(() => {
+    const period = searchParams.get("period");
+    if (period && !isResponder) {
+      setForm({ ...emptyForm, period });
+      setFormOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, isResponder, setSearchParams]);
 
   // Keep an open thread in step after a reload.
   useEffect(() => {
@@ -408,6 +422,11 @@ const Requests = () => {
                   </TableCell>
                   <TableCell className="whitespace-normal min-w-[200px] max-w-[320px]">
                     {r.subject}
+                    {r.audit && (
+                      <span className="block text-xs text-muted-foreground">
+                        from audit {r.audit.auditId}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>{r.control.controlId}</TableCell>
                   <TableCell>{r.period}</TableCell>
@@ -579,6 +598,7 @@ const Requests = () => {
               <div className="text-sm text-muted-foreground">
                 {detail.control.controlId} · {detail.control.name} ·{" "}
                 {detail.period}
+                {detail.audit && <> · audit {detail.audit.auditId}</>}
                 {detail.dueDate && (
                   <>
                     {" · needed by "}
