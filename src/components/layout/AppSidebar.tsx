@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Zap,
   Search,
+  MessageSquare,
   CalendarDays,
   Settings,
   CreditCard,
@@ -71,6 +72,12 @@ const allNavItems = [
     to: "/audit",
     label: "Audit",
     icon: Search,
+    roles: ["admin", "tester", "control_owner"],
+  },
+  {
+    to: "/requests",
+    label: "Requests",
+    icon: MessageSquare,
     roles: ["admin", "tester", "control_owner"],
   },
   {

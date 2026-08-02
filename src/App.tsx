@@ -20,6 +20,7 @@ import MonthlyReport from "./pages/MonthlyReport";
 import Issues from "./pages/Issues";
 import Actions from "./pages/Actions";
 import Audit from "./pages/Audit";
+import Requests from "./pages/Requests";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import Billing from "./pages/Billing";
@@ -125,6 +126,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute path="/audit">
               <Audit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/requests"
+          element={
+            <ProtectedRoute path="/requests">
+              <Requests />
             </ProtectedRoute>
           }
         />
