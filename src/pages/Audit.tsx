@@ -112,7 +112,6 @@ interface AuditRecord {
   objectives: string | null;
   scope: string | null;
   keyRisks: string | null;
-  lead: string | null;
   procedures: string | null;
   startMonth: string;
   dueDay: number;
@@ -158,7 +157,6 @@ const emptyForm = {
   objectives: "",
   scope: "",
   keyRisks: "",
-  lead: "",
   procedures: "",
   startMonth: "",
   dueDay: "15",
@@ -259,7 +257,6 @@ const Audit = () => {
       objectives: a.objectives ?? "",
       scope: a.scope ?? "",
       keyRisks: a.keyRisks ?? "",
-      lead: a.lead ?? "",
       procedures: a.procedures ?? "",
       startMonth: a.startMonth,
       dueDay: String(a.dueDay),
@@ -289,7 +286,6 @@ const Audit = () => {
       objectives: form.objectives,
       scope: form.scope,
       keyRisks: form.keyRisks,
-      lead: form.lead,
       procedures: form.procedures,
       startMonth: form.startMonth,
       dueDay: Number(form.dueDay),
@@ -512,7 +508,6 @@ const Audit = () => {
     auditName: a.auditName,
     control: a.control.controlId,
     frequency: FREQUENCY_LABELS[a.frequency] ?? a.frequency,
-    lead: a.lead ?? "",
     recipient: a.recipient?.email ?? "",
     startMonth: a.startMonth,
     dueDay: a.dueDay,
@@ -576,7 +571,6 @@ const Audit = () => {
           <td>${esc(a.auditName)}</td>
           <td>${esc(a.control.controlId)}</td>
           <td>${esc(FREQUENCY_LABELS[a.frequency] ?? a.frequency)}</td>
-          <td>${esc(a.lead ?? "—")}</td>
           <td>${esc(a.recipient ? (a.recipient.fullName ?? a.recipient.email) : "—")}</td>
           <td>${esc(open)}</td>
         </tr>`;
@@ -612,7 +606,6 @@ const Audit = () => {
           ${field("Objectives", a.objectives)}
           ${field("Scope", a.scope)}
           ${field("Key Risks", a.keyRisks)}
-          ${field("Lead", a.lead)}
           ${field("Procedures / Test Steps", a.procedures)}
           ${field("Frequency", FREQUENCY_LABELS[a.frequency] ?? a.frequency)}
           ${field("Starts", `${a.startMonth} (day ${a.dueDay})`)}
@@ -673,7 +666,7 @@ const Audit = () => {
   <table>
     <thead><tr>
       <th>Audit ID</th><th>Area / Process</th><th>Audit Name</th><th>Control</th>
-      <th>Frequency</th><th>Lead</th><th>Recipient</th><th>Open</th>
+      <th>Frequency</th><th>Recipient</th><th>Open</th>
     </tr></thead>
     <tbody>${summaryRows}</tbody>
   </table>
@@ -742,7 +735,6 @@ const Audit = () => {
               <TableHead>Audit Name</TableHead>
               <TableHead>Control</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Lead</TableHead>
               <TableHead>Recipient</TableHead>
               <TableHead>Start</TableHead>
               <TableHead>Open Issues</TableHead>
@@ -752,13 +744,13 @@ const Audit = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   Loading audits…
                 </TableCell>
               </TableRow>
             ) : audits.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {isResponder
                     ? "No audit requests have been sent to you."
                     : "No audits yet. Raise one against any control."}
@@ -790,7 +782,6 @@ const Audit = () => {
                     <TableCell>
                       {FREQUENCY_LABELS[a.frequency] ?? a.frequency}
                     </TableCell>
-                    <TableCell>{a.lead || "—"}</TableCell>
                     <TableCell className="whitespace-normal min-w-[140px] max-w-[220px]">
                       {a.recipient
                         ? (a.recipient.fullName ?? a.recipient.email)
@@ -925,14 +916,6 @@ const Audit = () => {
                   The audited control can't be changed — create a new audit instead.
                 </p>
               )}
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label>Lead</Label>
-              <Input
-                value={form.lead}
-                onChange={(e) => set("lead", e.target.value)}
-              />
             </div>
 
             <div className="grid gap-1.5">
