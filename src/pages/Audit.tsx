@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { exportToCSV } from "@/lib/csv-export";
 import { apiFetch, getAccessToken } from "@/lib/api";
+import { membersForCountry } from "@/lib/countryAccess";
 import { useCountryStore } from "@/lib/countryStore";
 import { useAuthStore } from "@/lib/authStore";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,7 @@ interface Member {
   fullName: string | null;
   email: string;
   role: string;
+  countryIds?: string[];
 }
 
 interface AuditCommentRecord {
@@ -119,6 +121,7 @@ interface LinkedRequest {
 interface AuditRecord {
   id: string;
   auditId: string;
+  countryId?: string;
   areaProcess: string | null;
   auditName: string;
   objectives: string | null;
@@ -255,6 +258,12 @@ const Audit = () => {
 
   const set = (key: keyof typeof emptyForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  // Only people working in the audited control's country can respond to it.
+  const auditCountryId =
+    editing?.countryId ??
+    failedControls.find((c) => c.id === form.controlId)?.countryId;
+  const eligibleRecipients = membersForCountry(members, auditCountryId);
 
   // Frequency is never chosen by hand — it always mirrors the audited control.
   const selectedControl = useMemo(() => {
@@ -954,7 +963,7 @@ const Audit = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_RECIPIENT}>No recipient</SelectItem>
-                  {members.map((m) => (
+                  {eligibleRecipients.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.fullName ?? m.email} ({m.role.replace("_", " ")})
                     </SelectItem>
