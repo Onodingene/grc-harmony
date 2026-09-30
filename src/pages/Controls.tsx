@@ -31,6 +31,7 @@ import { useCountryStore } from "@/lib/countryStore";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import MemberCombobox from "@/components/MemberCombobox";
+import { membersForCountry } from "@/lib/countryAccess";
 
 interface Control {
   id: string;
@@ -56,6 +57,8 @@ interface CompanyMember {
   id: string;
   fullName: string;
   email: string;
+  role?: string;
+  countryIds?: string[];
 }
 
 const emptyForm = {
@@ -477,7 +480,7 @@ const Controls = () => {
               <div className="grid gap-1.5">
                 <Label>Owner</Label>
                 <MemberCombobox
-                  members={members}
+                  members={membersForCountry(members, form.countryId)}
                   value={form.ownerId}
                   onValueChange={(v) => setForm({ ...form, ownerId: v })}
                   placeholder="Select owner"
@@ -486,7 +489,7 @@ const Controls = () => {
               <div className="grid gap-1.5">
                 <Label>Tester</Label>
                 <MemberCombobox
-                  members={members}
+                  members={membersForCountry(members, form.countryId)}
                   value={form.testerId}
                   onValueChange={(v) => setForm({ ...form, testerId: v })}
                   placeholder="Select tester"
@@ -579,7 +582,18 @@ const Controls = () => {
                 <Label>Entity</Label>
                 <Select
                   value={form.countryId}
-                  onValueChange={(v) => setForm({ ...form, countryId: v })}
+                  onValueChange={(v) => {
+                    // Countries are independent: drop people who don't work in the new one.
+                    const eligible = membersForCountry(members, v);
+                    const keep = (id: string) =>
+                      eligible.some((m) => m.id === id) ? id : "";
+                    setForm({
+                      ...form,
+                      countryId: v,
+                      ownerId: keep(form.ownerId),
+                      testerId: keep(form.testerId),
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select entity" />

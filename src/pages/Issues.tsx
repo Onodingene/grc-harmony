@@ -32,6 +32,7 @@ import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
 import { useAuthStore } from "@/lib/authStore";
 import MemberCombobox from "@/components/MemberCombobox";
+import { membersForCountry } from "@/lib/countryAccess";
 
 type IssueSeverity = "low" | "medium" | "high";
 type IssueStatus = "open" | "in_progress" | "closed";
@@ -57,6 +58,8 @@ interface CompanyMember {
   id: string;
   fullName: string;
   email: string;
+  role?: string;
+  countryIds?: string[];
 }
 interface Control {
   id: string;
@@ -589,7 +592,15 @@ const Issues = () => {
               <label className="text-sm font-medium">Entity</label>
               <Select
                 value={form.countryId}
-                onValueChange={(v) => setForm({ ...form, countryId: v })}
+                onValueChange={(v) => {
+                  // Countries are independent: drop an owner who doesn't work in the new one.
+                  const eligible = membersForCountry(companyMembers, v);
+                  setForm({
+                    ...form,
+                    countryId: v,
+                    ownerId: eligible.some((m) => m.id === form.ownerId) ? form.ownerId : "",
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select entity" />
@@ -652,7 +663,7 @@ const Issues = () => {
             <div>
               <label className="text-sm font-medium">Owner</label>
               <MemberCombobox
-                members={companyMembers}
+                members={membersForCountry(companyMembers, form.countryId)}
                 value={form.ownerId}
                 onValueChange={(v) => setForm({ ...form, ownerId: v })}
                 placeholder="Select owner (optional)"

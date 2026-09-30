@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Send, Paperclip, MessageSquare, Trash2 } from "lucide-react";
 import { apiFetch, getAccessToken } from "@/lib/api";
+import { membersForCountry } from "@/lib/countryAccess";
 import { useCountryStore } from "@/lib/countryStore";
 import { useAuthStore } from "@/lib/authStore";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +39,7 @@ interface Person {
   id: string;
   fullName: string | null;
   email: string;
+  countryIds?: string[];
 }
 
 interface RequestMessage {
@@ -68,6 +70,7 @@ interface ControlOption {
   id: string;
   controlId: string;
   name: string;
+  countryId?: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -167,6 +170,12 @@ const Requests = () => {
 
   const set = (key: keyof typeof emptyForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  // Only people working in the control's country can be asked for documents.
+  const eligibleRecipients = membersForCountry(
+    members,
+    controls.find((c) => c.id === form.controlId)?.countryId,
+  );
 
   const isOverdue = (r: DocumentRequest) =>
     !!r.dueDate && r.status !== "closed" && new Date(r.dueDate) < new Date();
@@ -524,7 +533,7 @@ const Requests = () => {
                   <SelectValue placeholder="Who should provide this?" />
                 </SelectTrigger>
                 <SelectContent>
-                  {members.map((m) => (
+                  {eligibleRecipients.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {nameOf(m)} ({m.role.replace("_", " ")})
                     </SelectItem>
