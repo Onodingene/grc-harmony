@@ -45,6 +45,7 @@ import {
   Globe,
   Copy,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
@@ -52,7 +53,7 @@ import { useCountryStore } from "@/lib/countryStore";
 import { Textarea } from "@/components/ui/textarea";
 import MemberCombobox from "@/components/MemberCombobox";
 import CountryChecklist from "@/components/CountryChecklist";
-import { membersForCountry, worksIn } from "@/lib/countryAccess";
+import { isUnassigned, membersForCountry, worksIn } from "@/lib/countryAccess";
 
 type Role = "admin" | "control_owner" | "tester" | "viewer";
 
@@ -555,9 +556,7 @@ const SettingsPage = () => {
   const assignedCountFor = (countryId: string) =>
     members.filter((m) => m.role !== "admin" && m.countryIds?.includes(countryId))
       .length;
-  const everywhereCount = members.filter(
-    (m) => m.role === "admin" || !m.countryIds?.length,
-  ).length;
+  const unassignedCount = members.filter(isUnassigned).length;
 
   const openAddControl = () => {
     setNewControl((f) => ({ ...f, countryId: selectedCountry?.id ?? "" }));
@@ -658,10 +657,17 @@ const SettingsPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {m.role === "admin" || !m.countryIds?.length ? (
+                      {m.role === "admin" ? (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <Globe className="w-3 h-3" /> All countries
                         </span>
+                      ) : isUnassigned(m) ? (
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-amber-300 bg-amber-50 text-amber-800"
+                        >
+                          <AlertTriangle className="w-3 h-3 mr-1" /> No country
+                        </Badge>
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           {m.countryIds.map((id) => (
@@ -906,12 +912,15 @@ const SettingsPage = () => {
               ))}
             </div>
           )}
-          {countries.length > 0 && everywhereCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {everywhereCount} member{everywhereCount === 1 ? "" : "s"} (admins
-              and anyone without a country) can see every country. Assign
-              countries under Team Members to keep each country separate.
-            </p>
+          {countries.length > 0 && unassignedCount > 0 && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm flex gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-700" />
+              <p>
+                {unassignedCount} member{unassignedCount === 1 ? " isn't" : "s aren't"}{" "}
+                assigned to a country yet. They can't own or test controls
+                until you assign them under Team Members.
+              </p>
+            </div>
           )}
         </TabsContent>
 
@@ -1006,7 +1015,13 @@ const SettingsPage = () => {
             <Button variant="outline" onClick={() => setInviteOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleInvite} disabled={!inviteEmail}>
+            <Button
+              onClick={handleInvite}
+              disabled={
+                !inviteEmail ||
+                (countries.length > 0 && inviteCountryIds.length === 0)
+              }
+            >
               <Mail className="w-4 h-4 mr-1" /> Send Invitation
             </Button>
           </DialogFooter>
@@ -1247,6 +1262,8 @@ const SettingsPage = () => {
               <label className="text-sm font-medium">Country</label>
               <Select
                 value={newControl.countryId}
+                // Filtered to a country, new controls stay inside that country.
+                disabled={!!selectedCountry}
                 onValueChange={(v) => {
                   // Countries are independent: drop people who don't work in the new one.
                   const eligible = membersForCountry(companyMembers, v);
@@ -1264,7 +1281,6 @@ const SettingsPage = () => {
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
@@ -1349,7 +1365,7 @@ const SettingsPage = () => {
                 onValueChange={(v) =>
                   setNewControl({ ...newControl, ownerId: v })
                 }
-                placeholder="Select owner"
+                placeholder={newControl.countryId ? "Select owner" : "Select a country first"}
               />
             </div>
             <div>
@@ -1360,7 +1376,7 @@ const SettingsPage = () => {
                 onValueChange={(v) =>
                   setNewControl({ ...newControl, testerId: v })
                 }
-                placeholder="Select tester"
+                placeholder={newControl.countryId ? "Select tester" : "Select a country first"}
                 includeUnassigned
               />
             </div>

@@ -12,7 +12,7 @@ interface CountryChecklistProps {
   onChange: (ids: string[]) => void;
 }
 
-// Picks the countries a member works in. None ticked means every country.
+// Picks the countries a member works in.
 const CountryChecklist = ({ countries, value, onChange }: CountryChecklistProps) => {
   const toggle = (id: string, on: boolean) =>
     onChange(on ? [...value, id] : value.filter((v) => v !== id));
@@ -48,7 +48,7 @@ const CountryChecklist = ({ countries, value, onChange }: CountryChecklistProps)
       </div>
       <p className="text-xs text-muted-foreground">
         {value.length === 0
-          ? "No country selected — this person will see every country."
+          ? "Pick at least one country — people without a country can't own or test controls."
           : "They'll only see these countries' controls, results and people."}
       </p>
     </div>

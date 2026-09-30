@@ -582,6 +582,8 @@ const Controls = () => {
                 <Label>Entity</Label>
                 <Select
                   value={form.countryId}
+                  // Filtered to a country, work stays inside that country.
+                  disabled={!!selectedCountry}
                   onValueChange={(v) => {
                     // Countries are independent: drop people who don't work in the new one.
                     const eligible = membersForCountry(members, v);
@@ -599,7 +601,6 @@ const Controls = () => {
                     <SelectValue placeholder="Select entity" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Entities</SelectItem>
                     {countries.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}

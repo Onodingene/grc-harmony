@@ -65,6 +65,7 @@ interface Control {
   id: string;
   controlId: string;
   name: string;
+  countryId?: string;
 }
 interface Country {
   id: string;
@@ -592,12 +593,16 @@ const Issues = () => {
               <label className="text-sm font-medium">Entity</label>
               <Select
                 value={form.countryId}
+                // Filtered to a country, work stays inside that country.
+                disabled={!!selectedCountry}
                 onValueChange={(v) => {
-                  // Countries are independent: drop an owner who doesn't work in the new one.
+                  // Countries are independent: drop a control or owner from another one.
                   const eligible = membersForCountry(companyMembers, v);
+                  const control = controls.find((c) => c.id === form.controlId);
                   setForm({
                     ...form,
                     countryId: v,
+                    controlId: control?.countryId === v ? form.controlId : "",
                     ownerId: eligible.some((m) => m.id === form.ownerId) ? form.ownerId : "",
                   });
                 }}
@@ -621,10 +626,14 @@ const Issues = () => {
                 onValueChange={(v) => setForm({ ...form, controlId: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select control" />
+                  <SelectValue
+                    placeholder={form.countryId ? "Select control" : "Select an entity first"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {controls.map((c) => (
+                  {controls
+                    .filter((c) => c.countryId === form.countryId)
+                    .map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.controlId} — {c.name}
                     </SelectItem>
