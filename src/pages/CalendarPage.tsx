@@ -171,7 +171,7 @@ const CalendarPage = () => {
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-3xl font-extrabold tracking-tight">
               Annual Audit Calendar
             </h1>
             <p className="text-gray-500 mt-1">

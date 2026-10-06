@@ -8,49 +8,57 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 7%;
+    /* Brand palette (Sun King analytical pack) */
+    --brand-yellow: 49 90% 60%;   /* #F5D63D */
+    --brand-navy: 224 61% 15%;    /* #0F1B3D */
+    --brand-teal: 186 47% 53%;    /* #4FB3BF */
+    --brand-orange: 19 77% 61%;   /* #E8804F */
+    --brand-olive: 87 12% 29%;    /* #4A5240 */
+    --brand-sand: 41 24% 85%;     /* #E3DDD0 */
+    --brand-brown: 33 23% 45%;    /* #8C7558 */
+
+    --background: 40 25% 97%;
+    --foreground: 224 45% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 224 45% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 224 45% 12%;
 
-    --primary: 45 100% 51%;
-    --primary-foreground: 0 0% 7%;
+    --primary: 49 90% 60%;
+    --primary-foreground: 224 61% 15%;
 
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 40 22% 93%;
+    --secondary-foreground: 224 45% 12%;
 
-    --muted: 45 20% 93%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 22% 94%;
+    --muted-foreground: 224 10% 42%;
 
-    --accent: 45 100% 51%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 49 90% 60%;
+    --accent-foreground: 224 61% 15%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 4 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 45 100% 51%;
+    --border: 38 18% 87%;
+    --input: 38 18% 85%;
+    --ring: 224 61% 15%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-
-    --sidebar-background: 45 100% 51%;        /* yellow */
-    --sidebar-foreground: 0 0% 7%;            /* dark text */
-    --sidebar-accent: 45 100% 45%;            /* slightly darker yellow */
-    --sidebar-border: 45 100% 40%;
-    --sidebar-primary: 45 100% 51%;
-    --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-ring: 45 100% 51%;
-    --sidebar-muted: 0 0% 50%;
-    --hero-gradient: linear-gradient(135deg, hsl(45 100% 51%), hsl(40 100% 45%));
-    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.06);
-    --shadow-elevated: 0 8px 24px hsl(0 0% 0% / 0.1);
+    --sidebar-background: 49 90% 60%;
+    --sidebar-foreground: 224 61% 15%;
+    --sidebar-accent: 49 85% 53%;
+    --sidebar-border: 49 70% 50%;
+    --sidebar-primary: 224 61% 15%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent-foreground: 224 61% 15%;
+    --sidebar-ring: 224 61% 15%;
+    --sidebar-muted: 224 20% 35%;
+    --hero-gradient: linear-gradient(135deg, hsl(224 61% 15%), hsl(224 50% 22%));
+    --shadow-card: 0 1px 2px hsl(224 40% 15% / 0.04), 0 4px 12px hsl(224 40% 15% / 0.05);
+    --shadow-elevated: 0 10px 30px hsl(224 40% 15% / 0.12);
   }
 }
 
@@ -61,6 +69,11 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1, h2, h3 {
+    @apply tracking-tight;
   }
 }

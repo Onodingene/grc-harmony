@@ -246,7 +246,7 @@ const Controls = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Controls</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Controls</h1>
         <p className="text-muted-foreground text-sm">
           Manage MCS Controls — Add, edit, or remove Minimum Control Standards
         </p>
@@ -285,7 +285,7 @@ const Controls = () => {
       <div className="rounded-lg border bg-card overflow-auto">
         <Table className="min-w-[1500px] text-left [&_th]:whitespace-nowrap [&_td]:align-top [&_td]:break-words">
           <TableHeader>
-            <TableRow className="bg-primary/10">
+            <TableRow>
               <TableHead>Control ID</TableHead>
               <TableHead>Control Name</TableHead>
               <TableHead className="min-w-[200px]">Control Description</TableHead>
@@ -325,10 +325,8 @@ const Controls = () => {
                   <TableCell className="font-semibold">{c.controlId}</TableCell>
                   <TableCell className="whitespace-normal min-w-[220px] max-w-[360px]">{c.name}</TableCell>
                   <TableCell className="max-w-xs break-words whitespace-normal min-w-[220px] max-w-[360px]">{c.description}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {c.domain}
-                    </Badge>
+                  <TableCell className="text-sm whitespace-nowrap">
+                    {c.domain}
                   </TableCell>
                   <TableCell className="text-sm">
                     {c.owner?.email ?? "—"}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,28 +6,126 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ClipboardList,
+  Percent,
+  Target,
+  Download,
+  Briefcase,
+  CalendarDays,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  LabelList,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
+import logo from "@/assets/logo.jpeg";
 
-const StatCard = ({
-  title,
+// Brand chart colours (see --brand-* tokens in index.css).
+const C = {
+  pass: "#4FB3BF", // teal
+  fail: "#E8804F", // orange
+  exception: "#8C7558", // brown
+  navy: "#0F1B3D",
+  grid: "#ECE7DC",
+  axis: "#6B7080",
+};
+const SEVERITY_COLOR: Record<string, string> = {
+  high: "#E8804F",
+  medium: "#8C7558",
+  low: "#4FB3BF",
+};
+
+const tooltipStyle = {
+  contentStyle: {
+    borderRadius: 10,
+    border: "1px solid #E3DDD0",
+    fontSize: 12,
+    boxShadow: "0 8px 24px rgba(15,27,61,0.12)",
+  },
+  cursor: { fill: "rgba(227,221,208,0.35)" },
+};
+
+const KpiTile = ({
+  label,
   value,
-  borderColor,
-  textColor,
+  sub,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: typeof ClipboardList;
+  accent: string;
+}) => (
+  <div className="relative overflow-hidden rounded-xl border border-border/80 bg-white px-4 py-2.5">
+    <span
+      className="absolute inset-x-0 top-0 h-1"
+      style={{ background: accent }}
+      aria-hidden
+    />
+    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <Icon className="w-3.5 h-3.5" style={{ color: accent }} />
+      {label}
+    </div>
+    <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
+      {value}
+    </p>
+    {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+  </div>
+);
+
+const Panel = ({
+  title,
+  subtitle,
+  className = "",
+  legend,
+  children,
 }: {
   title: string;
-  value: string | number;
-  borderColor: string;
-  textColor: string;
+  subtitle?: string;
+  className?: string;
+  legend?: { label: string; color: string }[];
+  children: React.ReactNode;
 }) => (
   <div
-    className={`bg-white p-4 rounded-lg shadow-sm border-l-4 ${borderColor}`}
+    className={`rounded-xl border border-border/80 bg-white p-4 flex flex-col ${className}`}
   >
-    <p className="text-xs text-muted-foreground">{title}</p>
-    <h2 className={`text-2xl font-bold ${textColor}`}>{value}</h2>
+    <div className="flex items-start justify-between gap-3">
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-foreground">
+        {title}
+      </p>
+      {legend && (
+        <div className="flex gap-3 text-[11px] text-muted-foreground">
+          {legend.map((l) => (
+            <span key={l.label} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: l.color }} />
+              {l.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+    {subtitle && (
+      <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+    )}
+    <div className="mt-2 flex-1 min-h-0">{children}</div>
   </div>
 );
 
@@ -297,19 +394,19 @@ const MonthlyReport = () => {
 <title>Monthly Test Report - ${esc(reportLabelFor(report.period))}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 32px; }
+  body { font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif; color: #0F1B3D; margin: 32px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
   h2 { font-size: 14px; margin: 24px 0 8px; }
   .period { color: #555; font-size: 12px; margin-bottom: 16px; }
   .metrics { display: flex; flex-wrap: wrap; gap: 12px; }
-  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #f9d75c; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
+  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #F5D63D; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
   .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
   .metric-value { display: block; font-size: 18px; font-weight: bold; }
   /* Fixed layout + wrapping keeps long descriptions inside their column
      instead of running off the page and over the next one. "anywhere" also
      breaks unbroken strings such as long file names. */
   table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; table-layout: fixed; }
-  th { background: #f9d75c; text-align: left; padding: 6px; word-wrap: break-word; }
+  th { background: #F5D63D; text-align: left; padding: 6px; word-wrap: break-word; }
   td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
   .empty { text-align: center; color: #888; padding: 16px; }
   ul { font-size: 12px; padding-left: 18px; }
@@ -317,7 +414,7 @@ const MonthlyReport = () => {
 </style>
 </head>
 <body>
-  <h1>Monthly Test Report</h1>
+  <h1>Governance, Risk and Compliance — Monthly Report</h1>
   <div class="period">${esc(report.company)} &middot; ${esc(
       reportLabelFor(report.period)
     )}</div>
@@ -371,8 +468,8 @@ const MonthlyReport = () => {
   };
 
   const resultColor = (result: string) => {
-    if (result === "pass") return "text-green-600";
-    return "text-red-600";
+    if (result === "pass") return "text-green-700";
+    return "text-red-700";
   };
 
   const severityColor = (severity: string) => {
@@ -381,376 +478,530 @@ const MonthlyReport = () => {
     return "text-green-600";
   };
 
+  const periodLabel = report ? reportLabelFor(report.period) : reportLabelFor(month);
+  const businessLabel = selectedCountry?.name ?? "All Businesses";
+
+  const outcomeData = report
+    ? [
+        { name: "Pass", value: report.metrics.passCount, color: C.pass },
+        { name: "Fail", value: report.metrics.failCount, color: C.fail },
+      ].filter((d) => d.value > 0)
+    : [];
+
+  const domainData = report
+    ? report.byDomain.map((d) => ({
+        domain: d.domain,
+        Pass: d.passCount,
+        Fail: d.failCount,
+      }))
+    : [];
+
+  const severityData = report
+    ? ["high", "medium", "low"].map((sev) => ({
+        severity: sev[0].toUpperCase() + sev.slice(1),
+        key: sev,
+        count: report.issues.filter((i) => i.severity === sev).length,
+      }))
+    : [];
+
   return (
-    <Card className="shadow-md">
-      <CardContent className="p-6 space-y-6">
-        {/* HEADER */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg font-semibold">Monthly Test Report</h1>
-          <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={loading || !report}
-                  className="bg-[#f9d75c] text-black hover:bg-[#f5cd3a] px-3 py-2 h-auto rounded-md text-sm font-medium"
-                >
-                  {loading ? "Loading..." : "Generate Report"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportCSV}>
-                  Download CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF}>
-                  Download PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* FILTERS */}
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="border rounded-md px-3 py-2 text-sm bg-white"
-          >
-            {monthOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="border rounded-md px-3 py-2 text-sm text-muted-foreground">
-            {selectedCountry?.name ?? "All Countries"}
-          </div>
-        </div>
-
-        {loading && (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            Loading report...
-          </div>
-        )}
-
-        {!loading && !report && (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            No data for this period.
-          </div>
-        )}
-
-        {!loading && report && (
-          <>
-            {/* STATS */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <StatCard
-                title="TOTAL TESTS"
-                value={report.metrics.totalTests}
-                borderColor="border-yellow-400"
-                textColor="text-black"
-              />
-              <StatCard
-                title="PASS"
-                value={report.metrics.passCount}
-                borderColor="border-green-500"
-                textColor="text-green-600"
-              />
-              <StatCard
-                title="FAILED ITEMS"
-                value={report.metrics.exceptionCount}
-                borderColor="border-yellow-500"
-                textColor="text-yellow-700"
-              />
-              <StatCard
-                title="FAIL"
-                value={report.metrics.failCount}
-                borderColor="border-red-500"
-                textColor="text-red-600"
-              />
-              <StatCard
-                title="PASS RATE"
-                value={`${report.metrics.passRate}%`}
-                borderColor="border-yellow-400"
-                textColor="text-yellow-700"
-              />
-            </div>
-
-            {/* DOMAIN */}
-            <div>
-              <h2 className="text-sm font-semibold mb-2">
-                Test Results by Domain
-              </h2>
-              <div className="grid md:grid-cols-3 gap-4">
-                {report.byDomain.map((d) => {
-                  const passRate = d.totalTests
-                    ? (d.passCount / d.totalTests) * 100
-                    : 0;
-                  return (
-                    <div
-                      key={d.domain}
-                      className="bg-white p-4 rounded-lg shadow-sm border"
-                    >
-                      <h3 className="font-semibold text-sm mb-2">{d.domain}</h3>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Total Tests
-                          </span>
-                          <span>{d.totalTests}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Pass</span>
-                          <span className="text-green-600 font-medium">
-                            {d.passCount}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Failed Items
-                          </span>
-                          <span className="text-yellow-800 font-medium">
-                            {d.exceptionCount}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Fail</span>
-                          <span className="text-red-600 font-medium">
-                            {d.failCount}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex justify-between text-[10px] mb-1">
-                          <span>Progress</span>
-                          <span>{Math.round(passRate)}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              passRate === 100
-                                ? "bg-green-500"
-                                : passRate > 0
-                                ? "bg-yellow-400"
-                                : "bg-gray-300"
-                            }`}
-                            style={{ width: `${passRate}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* DETAILED TABLE */}
-            <div>
-              <h2 className="text-sm font-semibold mb-2">
-                Detailed Test Results
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-[1500px] w-full table-fixed text-xs text-left [&_th]:p-2 [&_td]:p-2 [&_td]:align-top">
-                  <colgroup>
-                    <col className="w-[90px]" />  {/* Test Date */}
-                    <col className="w-[90px]" />  {/* Control ID */}
-                    <col className="w-[260px]" /> {/* Control Description */}
-                    <col className="w-[130px]" /> {/* Domain */}
-                    <col className="w-[140px]" /> {/* Tester */}
-                    <col className="w-[260px]" /> {/* Test Procedure */}
-                    <col className="w-[80px]" />  {/* Sample Size */}
-                    <col className="w-[80px]" />  {/* Failed Items */}
-                    <col className="w-[80px]" />  {/* Result */}
-                    <col className="w-[240px]" /> {/* Evidence & Comment */}
-                    <col className="w-[240px]" /> {/* Recommendation */}
-                  </colgroup>
-                  <thead className="bg-[#f9d75c] text-left">
-                    <tr>
-                      <th className="whitespace-nowrap">Test Date</th>
-                      <th className="whitespace-nowrap">Control ID</th>
-                      <th>Control Description</th>
-                      <th className="whitespace-nowrap">Domain</th>
-                      <th className="whitespace-nowrap">Tester</th>
-                      <th>Test Procedure</th>
-                      <th className="whitespace-nowrap">Sample Size</th>
-                      <th className="whitespace-nowrap">Failed Items</th>
-                      <th className="whitespace-nowrap">Result</th>
-                      <th>Evidence &amp; Comment</th>
-                      <th>Recommendation</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.detailedResults.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={11}
-                          className="p-4 text-center text-muted-foreground"
-                        >
-                          No test results for this period
-                        </td>
-                      </tr>
-                    )}
-                    {report.detailedResults.map((r, idx) => (
-                      <tr key={idx} className="border-b">
-                        <td className="whitespace-nowrap">
-                          {new Date(r.testDate).toLocaleDateString()}
-                        </td>
-                        <td className="whitespace-nowrap">{r.controlId}</td>
-                        <td className="whitespace-normal break-words">
-                          {controlDescriptionOf(r)}
-                        </td>
-                        <td className="whitespace-nowrap">{r.domain}</td>
-                        <td className="whitespace-nowrap">{r.tester.fullName}</td>
-                        <td className="whitespace-normal break-words">
-                          {r.testProcedure || "—"}
-                        </td>
-                        <td className="whitespace-nowrap">{r.sampleSize}</td>
-                        <td className="whitespace-nowrap">{r.exceptions}</td>
-                        <td
-                          className={`whitespace-nowrap ${resultColor(r.result)}`}
-                          style={{ textTransform: "capitalize" }}
-                        >
-                          {r.result}
-                        </td>
-                        <td className="whitespace-normal break-words">
-                          {evidenceUrlsOf(r).length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {evidenceUrlsOf(r).map((url, i) => (
-                                <a
-                                  key={i}
-                                  href={`${BASE_URL}${url}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    openEvidence(url);
-                                  }}
-                                  className="underline text-blue-600 cursor-pointer"
-                                >
-                                  View{evidenceUrlsOf(r).length > 1 ? ` ${i + 1}` : ""}
-                                </a>
-                              ))}
-                            </div>
-                          ) : (
-                            "—"
-                          )}
-                          {r.comments && (
-                            <p className="mt-1 text-muted-foreground italic">
-                              {r.comments}
-                            </p>
-                          )}
-                        </td>
-                        <td className="whitespace-normal break-words">
-                          {r.recommendation || "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* ISSUES */}
-            <div>
-              <h2 className="text-sm font-semibold mb-2">Issues Identified</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-[1100px] w-full table-fixed text-xs text-left [&_th]:p-2 [&_td]:p-2 [&_td]:align-top">
-                  <colgroup>
-                    <col className="w-[100px]" /> {/* Issue ID */}
-                    <col className="w-[220px]" /> {/* Control Description */}
-                    <col className="w-[280px]" /> {/* Description */}
-                    <col className="w-[90px]" />  {/* Severity */}
-                    <col className="w-[110px]" /> {/* Status */}
-                    <col className="w-[150px]" /> {/* Owner */}
-                    <col className="w-[110px]" /> {/* Due Date */}
-                  </colgroup>
-                  <thead className="bg-[#f9d75c] text-left">
-                    <tr>
-                      <th className="whitespace-nowrap">Issue ID</th>
-                      <th>Control Description</th>
-                      <th>Description</th>
-                      <th className="whitespace-nowrap">Severity</th>
-                      <th className="whitespace-nowrap">Status</th>
-                      <th className="whitespace-nowrap">Owner</th>
-                      <th className="whitespace-nowrap">Due Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.issues.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={7}
-                          className="p-4 text-center text-muted-foreground"
-                        >
-                          No issues for this period
-                        </td>
-                      </tr>
-                    )}
-                    {report.issues.map((i) => (
-                      <tr key={i.issueId} className="border-b">
-                        <td className="whitespace-nowrap">{i.issueId}</td>
-                        <td className="whitespace-normal break-words">
-                          {issueControlDescriptionOf(i)}
-                        </td>
-                        <td className="whitespace-normal break-words">
-                          {i.description}
-                        </td>
-                        <td
-                          className={`whitespace-nowrap ${severityColor(i.severity)}`}
-                          style={{ textTransform: "capitalize" }}
-                        >
-                          {i.severity}
-                        </td>
-                        <td
-                          className="whitespace-nowrap text-red-600"
-                          style={{ textTransform: "capitalize" }}
-                        >
-                          {i.status.replace("_", " ")}
-                        </td>
-                        <td className="whitespace-nowrap">
-                          {i.owner?.fullName ?? "—"}
-                        </td>
-                        <td className="whitespace-nowrap">
-                          {i.dueDate
-                            ? new Date(i.dueDate).toLocaleDateString()
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* RECOMMENDATIONS */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold mb-2">Recommendations</h2>
-              {report.recommendations.length === 0 && (
-                <div className="bg-green-50 border-l-4 border-green-600 p-3 text-xs flex items-start gap-2">
-                  <CheckCircle2
-                    className="w-4 h-4 shrink-0 mt-px text-green-700"
-                    aria-hidden="true"
-                  />
-                  <span>All controls are performing well.</span>
-                </div>
-              )}
-              {report.recommendations.map((rec, idx) => (
-                <div
-                  key={idx}
-                  className="bg-yellow-50 border-l-4 border-yellow-500 p-3 text-xs flex items-start gap-2"
-                >
-                  <AlertTriangle
-                    className="w-4 h-4 shrink-0 mt-px text-yellow-800"
-                    aria-hidden="true"
-                  />
-                  <span>{rec}</span>
-                </div>
+    <div className="space-y-4">
+      {/* TOOLBAR (kept outside the board so screenshots stay clean) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg border bg-white px-3 h-10">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="bg-transparent text-sm font-medium outline-none"
+              aria-label="Report month"
+            >
+              {monthOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border bg-white px-3 h-10 text-sm font-medium">
+            <Briefcase className="w-4 h-4 text-muted-foreground" />
+            {businessLabel}
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              disabled={loading || !report}
+              className="h-10 bg-brand-navy text-white hover:bg-brand-navy/90"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {loading ? "Loading..." : "Generate Report"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleExportCSV}>
+              Download CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportPDF}>
+              Download PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* REPORT BOARD — sized to fit one screen for screenshots */}
+      <section
+        className={`rounded-2xl border border-border/80 bg-[#FBFAF7] shadow-[var(--shadow-card)] overflow-hidden transition-opacity ${
+          loading ? "opacity-60" : ""
+        }`}
+      >
+        <div className="bg-primary px-6 py-4 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-brand-navy leading-none">
+              Monthly Report
+            </h1>
+            <p className="mt-2 text-base md:text-lg font-semibold text-brand-navy/80">
+              Control testing results · {periodLabel}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-navy/70">
+              Business
+            </p>
+            <p className="text-xl font-extrabold text-brand-navy">
+              {businessLabel}
+            </p>
+          </div>
+        </div>
+
+        {!report ? (
+          <div className="py-24 text-center text-muted-foreground text-sm">
+            {loading ? "Loading report..." : "No data for this period."}
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {/* KPI ROW */}
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+              <KpiTile
+                label="Total tests"
+                value={report.metrics.totalTests}
+                icon={ClipboardList}
+                accent={C.navy}
+              />
+              <KpiTile
+                label="Pass"
+                value={report.metrics.passCount}
+                icon={CheckCircle2}
+                accent={C.pass}
+              />
+              <KpiTile
+                label="Fail"
+                value={report.metrics.failCount}
+                icon={XCircle}
+                accent={C.fail}
+              />
+              <KpiTile
+                label="Failed items"
+                value={report.metrics.exceptionCount}
+                sub="Exceptions in samples"
+                icon={AlertTriangle}
+                accent={C.exception}
+              />
+              <KpiTile
+                label="Pass rate"
+                value={`${report.metrics.passRate}%`}
+                icon={Percent}
+                accent={C.pass}
+              />
+              <KpiTile
+                label="Coverage"
+                value={`${report.metrics.coverage}%`}
+                icon={Target}
+                accent={C.navy}
+              />
             </div>
-          </>
+
+            {/* CHARTS ROW */}
+            <div className="grid gap-3 lg:grid-cols-3">
+              <Panel
+                title="Results by domain"
+                subtitle="Tests passed and failed per key area"
+                legend={[
+                  { label: "Pass", color: C.pass },
+                  { label: "Fail", color: C.fail },
+                ]}
+                className="lg:col-span-2 h-[250px]"
+              >
+                {domainData.length === 0 ? (
+                  <EmptyChart />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={domainData}
+                      margin={{ top: 18, right: 8, left: -18, bottom: 0 }}
+                      barGap={2}
+                    >
+                      <CartesianGrid vertical={false} stroke={C.grid} />
+                      <XAxis
+                        dataKey="domain"
+                        tick={{ fontSize: 11, fill: C.axis }}
+                        tickLine={false}
+                        axisLine={{ stroke: C.grid }}
+                        interval={0}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fontSize: 11, fill: C.axis }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip {...tooltipStyle} />
+                      <Bar dataKey="Pass" fill={C.pass} radius={[4, 4, 0, 0]} maxBarSize={36}>
+                        <LabelList dataKey="Pass" position="top" fontSize={11} fill={C.navy} />
+                      </Bar>
+                      <Bar dataKey="Fail" fill={C.fail} radius={[4, 4, 0, 0]} maxBarSize={36}>
+                        <LabelList dataKey="Fail" position="top" fontSize={11} fill={C.navy} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </Panel>
+
+              <Panel
+                title="Test outcome"
+                subtitle={`${report.metrics.passCount} of ${report.metrics.passCount + report.metrics.failCount} tests passed`}
+                legend={[
+                  { label: "Pass", color: C.pass },
+                  { label: "Fail", color: C.fail },
+                ]}
+                className="h-[250px]"
+              >
+                {outcomeData.length === 0 ? (
+                  <EmptyChart />
+                ) : (
+                  <div className="relative h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={outcomeData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius="62%"
+                          outerRadius="88%"
+                          paddingAngle={outcomeData.length > 1 ? 2 : 0}
+                          stroke="none"
+                        >
+                          {outcomeData.map((d) => (
+                            <Cell key={d.name} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip {...tooltipStyle} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-extrabold text-foreground">
+                        {report.metrics.passRate}%
+                      </span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Pass rate
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </Panel>
+            </div>
+
+            {/* BOTTOM ROW */}
+            <div className="grid gap-3 lg:grid-cols-3">
+              <Panel
+                title="Issues by severity"
+                subtitle={`${report.issues.length} issue${report.issues.length === 1 ? "" : "s"} raised`}
+                className="h-[160px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={severityData}
+                    layout="vertical"
+                    margin={{ top: 0, right: 28, left: 0, bottom: 0 }}
+                  >
+                    <XAxis type="number" hide allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="severity"
+                      width={60}
+                      tick={{ fontSize: 11, fill: C.navy, fontWeight: 600 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip {...tooltipStyle} />
+                    <Bar dataKey="count" name="Issues" radius={[0, 4, 4, 0]} barSize={14}>
+                      {severityData.map((d) => (
+                        <Cell key={d.key} fill={SEVERITY_COLOR[d.key]} />
+                      ))}
+                      <LabelList dataKey="count" position="right" fontSize={12} fill={C.navy} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Panel>
+
+              <Panel
+                title="Key recommendations"
+                className="lg:col-span-2 h-[160px]"
+              >
+                {report.recommendations.length === 0 ? (
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <CheckCircle2 className="w-4 h-4" style={{ color: C.pass }} />
+                    All controls are performing well.
+                  </div>
+                ) : (
+                  <ol className="space-y-2 overflow-hidden">
+                    {report.recommendations.slice(0, 3).map((rec, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm leading-snug">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-brand-navy">
+                          {idx + 1}
+                        </span>
+                        <span className="line-clamp-2">{rec}</span>
+                      </li>
+                    ))}
+                    {report.recommendations.length > 3 && (
+                      <li className="text-xs text-muted-foreground pl-7">
+                        +{report.recommendations.length - 3} more below
+                      </li>
+                    )}
+                  </ol>
+                )}
+              </Panel>
+            </div>
+
+            {/* FOOTER */}
+            <div className="flex items-center justify-between pt-1">
+              <img src={logo} alt="Sun King" className="h-6 w-auto mix-blend-multiply" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Governance, Risk and Compliance · {businessLabel}
+              </span>
+            </div>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </section>
+
+      {!loading && report && (
+        <>
+          {/* DETAILED TABLE */}
+          <section className="rounded-xl border bg-white shadow-[var(--shadow-card)] overflow-hidden">
+            <h2 className="px-5 py-4 text-base font-bold border-b">
+              Detailed Test Results
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-[1500px] w-full table-fixed text-xs text-left [&_th]:px-3 [&_th]:py-2.5 [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top">
+                <colgroup>
+                  <col className="w-[90px]" />  {/* Test Date */}
+                  <col className="w-[90px]" />  {/* Control ID */}
+                  <col className="w-[260px]" /> {/* Control Description */}
+                  <col className="w-[130px]" /> {/* Domain */}
+                  <col className="w-[140px]" /> {/* Tester */}
+                  <col className="w-[260px]" /> {/* Test Procedure */}
+                  <col className="w-[80px]" />  {/* Sample Size */}
+                  <col className="w-[80px]" />  {/* Failed Items */}
+                  <col className="w-[80px]" />  {/* Result */}
+                  <col className="w-[240px]" /> {/* Evidence & Comment */}
+                  <col className="w-[240px]" /> {/* Recommendation */}
+                </colgroup>
+                <thead className="bg-muted/70 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="whitespace-nowrap">Test Date</th>
+                    <th className="whitespace-nowrap">Control ID</th>
+                    <th>Control Description</th>
+                    <th className="whitespace-nowrap">Domain</th>
+                    <th className="whitespace-nowrap">Tester</th>
+                    <th>Test Procedure</th>
+                    <th className="whitespace-nowrap">Sample Size</th>
+                    <th className="whitespace-nowrap">Failed Items</th>
+                    <th className="whitespace-nowrap">Result</th>
+                    <th>Evidence &amp; Comment</th>
+                    <th>Recommendation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.detailedResults.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={11}
+                        className="p-4 text-center text-muted-foreground"
+                      >
+                        No test results for this period
+                      </td>
+                    </tr>
+                  )}
+                  {report.detailedResults.map((r, idx) => (
+                    <tr key={idx} className="border-b border-border/70 hover:bg-muted/40">
+                      <td className="whitespace-nowrap">
+                        {new Date(r.testDate).toLocaleDateString()}
+                      </td>
+                      <td className="whitespace-nowrap font-semibold">{r.controlId}</td>
+                      <td className="whitespace-normal break-words">
+                        {controlDescriptionOf(r)}
+                      </td>
+                      <td className="whitespace-nowrap">{r.domain}</td>
+                      <td className="whitespace-nowrap">{r.tester.fullName}</td>
+                      <td className="whitespace-normal break-words">
+                        {r.testProcedure || "—"}
+                      </td>
+                      <td className="whitespace-nowrap">{r.sampleSize}</td>
+                      <td className="whitespace-nowrap">{r.exceptions}</td>
+                      <td
+                        className={`whitespace-nowrap font-semibold ${resultColor(r.result)}`}
+                        style={{ textTransform: "capitalize" }}
+                      >
+                        {r.result}
+                      </td>
+                      <td className="whitespace-normal break-words">
+                        {evidenceUrlsOf(r).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {evidenceUrlsOf(r).map((url, i) => (
+                              <a
+                                key={i}
+                                href={`${BASE_URL}${url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openEvidence(url);
+                                }}
+                                className="underline text-blue-700 cursor-pointer"
+                              >
+                                View{evidenceUrlsOf(r).length > 1 ? ` ${i + 1}` : ""}
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
+                        {r.comments && (
+                          <p className="mt-1 text-muted-foreground italic">
+                            {r.comments}
+                          </p>
+                        )}
+                      </td>
+                      <td className="whitespace-normal break-words">
+                        {r.recommendation || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* ISSUES */}
+          <section className="rounded-xl border bg-white shadow-[var(--shadow-card)] overflow-hidden">
+            <h2 className="px-5 py-4 text-base font-bold border-b">
+              Issues Identified
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-[1100px] w-full table-fixed text-xs text-left [&_th]:px-3 [&_th]:py-2.5 [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top">
+                <colgroup>
+                  <col className="w-[100px]" /> {/* Issue ID */}
+                  <col className="w-[220px]" /> {/* Control Description */}
+                  <col className="w-[280px]" /> {/* Description */}
+                  <col className="w-[90px]" />  {/* Severity */}
+                  <col className="w-[110px]" /> {/* Status */}
+                  <col className="w-[150px]" /> {/* Owner */}
+                  <col className="w-[110px]" /> {/* Due Date */}
+                </colgroup>
+                <thead className="bg-muted/70 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="whitespace-nowrap">Issue ID</th>
+                    <th>Control Description</th>
+                    <th>Description</th>
+                    <th className="whitespace-nowrap">Severity</th>
+                    <th className="whitespace-nowrap">Status</th>
+                    <th className="whitespace-nowrap">Owner</th>
+                    <th className="whitespace-nowrap">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.issues.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="p-4 text-center text-muted-foreground"
+                      >
+                        No issues for this period
+                      </td>
+                    </tr>
+                  )}
+                  {report.issues.map((i) => (
+                    <tr key={i.issueId} className="border-b border-border/70 hover:bg-muted/40">
+                      <td className="whitespace-nowrap font-semibold">{i.issueId}</td>
+                      <td className="whitespace-normal break-words">
+                        {issueControlDescriptionOf(i)}
+                      </td>
+                      <td className="whitespace-normal break-words">
+                        {i.description}
+                      </td>
+                      <td
+                        className={`whitespace-nowrap font-semibold ${severityColor(i.severity)}`}
+                        style={{ textTransform: "capitalize" }}
+                      >
+                        {i.severity}
+                      </td>
+                      <td
+                        className="whitespace-nowrap text-red-700"
+                        style={{ textTransform: "capitalize" }}
+                      >
+                        {i.status.replace("_", " ")}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {i.owner?.fullName ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {i.dueDate
+                          ? new Date(i.dueDate).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* RECOMMENDATIONS */}
+          <section className="rounded-xl border bg-white shadow-[var(--shadow-card)] p-5 space-y-2">
+            <h2 className="text-base font-bold mb-3">Recommendations</h2>
+            {report.recommendations.length === 0 && (
+              <div className="rounded-lg bg-brand-teal/10 border-l-4 border-brand-teal p-3 text-sm flex items-start gap-2">
+                <CheckCircle2
+                  className="w-4 h-4 shrink-0 mt-0.5 text-brand-teal"
+                  aria-hidden="true"
+                />
+                <span>All controls are performing well.</span>
+              </div>
+            )}
+            {report.recommendations.map((rec, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg bg-primary/15 border-l-4 border-primary p-3 text-sm flex items-start gap-2"
+              >
+                <AlertTriangle
+                  className="w-4 h-4 shrink-0 mt-0.5 text-brand-navy"
+                  aria-hidden="true"
+                />
+                <span>{rec}</span>
+              </div>
+            ))}
+          </section>
+        </>
+      )}
+    </div>
   );
 };
+
+const EmptyChart = () => (
+  <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+    No tests logged for this period.
+  </div>
+);
 
 export default MonthlyReport;

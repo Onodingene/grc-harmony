@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { apiFetch } from "@/lib/api";
@@ -41,7 +41,7 @@ const AppHeader = () => {
     ).then((res) => {
       if (res.data) {
         setCountries(res.data);
-        setSelectedCountry(null); // Default to "All Countries"
+        setSelectedCountry(null); // Default to "All Businesses"
       }
     });
   }, []);
@@ -72,27 +72,31 @@ const AppHeader = () => {
     : "AU";
 
   return (
-    <header className="h-16 border-b border-border flex items-center justify-between bg-white px-4">
+    <header className="sticky top-0 z-20 h-16 border-b border-border/80 flex items-center justify-between bg-white/90 backdrop-blur px-6">
       {/* LEFT SIDE */}
-      <div className="flex items-center gap-4">
-        <div className="h-6 w-px bg-gray-300" />
-        <h2 className="text-xl font-semibold text-black">GRC Control Tool</h2>
+      <div className="flex items-center gap-3">
+        <span className="h-7 w-1.5 rounded-full bg-primary" aria-hidden />
+        <h2 className="text-lg font-bold text-foreground tracking-tight">
+          Governance, Risk and Compliance
+        </h2>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">Country:</span>
+          <span className="text-muted-foreground flex items-center gap-1.5">
+            <Briefcase className="w-3.5 h-3.5" /> Business
+          </span>
           <Select
             value={selectedCountry?.id ?? ALL_COUNTRIES_VALUE}
             onValueChange={handleCountryChange}
           >
-            <SelectTrigger className="w-40 h-8">
-              <SelectValue placeholder="All Countries" />
+            <SelectTrigger className="w-44 h-9 font-medium">
+              <SelectValue placeholder="All Businesses" />
             </SelectTrigger>
             <SelectContent>
-              {/* All Countries option always first */}
-              <SelectItem value={ALL_COUNTRIES_VALUE}>All Countries</SelectItem>
+              {/* All Businesses option always first */}
+              <SelectItem value={ALL_COUNTRIES_VALUE}>All Businesses</SelectItem>
               {countries.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
@@ -102,13 +106,13 @@ const AppHeader = () => {
           </Select>
         </div>
 
-        <span className="text-muted-foreground">{today}</span>
+        <span className="hidden lg:inline text-muted-foreground">{today}</span>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+              <Avatar className="w-9 h-9 ring-2 ring-primary/60">
+                <AvatarFallback className="bg-brand-navy text-white text-xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>

@@ -131,7 +131,7 @@ const Profile = () => {
       </button>
 
       <div>
-        <h1 className="text-2xl font-bold">My Profile</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">My Profile</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your account details
         </p>

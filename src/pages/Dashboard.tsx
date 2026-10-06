@@ -9,7 +9,7 @@ import {
   Users,
   ClipboardList,
   XCircle,
-  Globe,
+  Briefcase,
   CalendarDays,
   ArrowUpRight,
   Activity,
@@ -67,9 +67,9 @@ interface CountryRow {
 
 // Status colours are reserved for pass/fail state and always ship with an
 // icon and a label, never colour alone.
-const STATUS = { good: "#0ca30c", critical: "#d03b3b" };
-// Single-hue magnitude colour for the per-country pass-rate bars.
-const MAGNITUDE = "#2a78d6";
+const STATUS = { good: "#4FB3BF", critical: "#E8804F" };
+// Single-hue magnitude colour for the per-business pass-rate bars.
+const MAGNITUDE = "#0F1B3D";
 
 interface Stat {
   label: string;
@@ -278,7 +278,7 @@ const Dashboard = () => {
           label: "Total Controls",
           value: String(data.totalControls ?? 0),
           icon: Shield,
-          trend: selectedCountry ? selectedCountry.name : "Across your countries",
+          trend: selectedCountry ? selectedCountry.name : "Across your businesses",
           link: "/controls",
         },
         {
@@ -344,17 +344,13 @@ const Dashboard = () => {
   return (
     <div className={`space-y-6 transition-opacity ${loading ? "opacity-60" : ""}`}>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden rounded-2xl bg-neutral-950 text-white p-6 md:p-8">
-        <div
-          aria-hidden
-          className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl"
-        />
+      <section className="relative overflow-hidden rounded-2xl bg-black text-white p-6 md:p-8">
         <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1">
-                <Globe className="w-3 h-3" />
-                {selectedCountry?.name ?? "All countries"}
+                <Briefcase className="w-3 h-3" />
+                {selectedCountry?.name ?? "All businesses"}
               </span>
               {periodLabel && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1">
@@ -364,7 +360,7 @@ const Dashboard = () => {
               )}
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
                 {greeting}, {user?.fullName?.split(" ")[0] ?? "there"}
               </h1>
               <p className="text-white/70 text-sm mt-1">{subtitle}</p>
@@ -413,13 +409,13 @@ const Dashboard = () => {
                 navigate(s.link);
               }
             }}
-            className="group rounded-xl shadow-sm cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group relative overflow-hidden rounded-xl cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    s.alert ? "bg-red-50 text-red-700" : "bg-primary/15 text-foreground"
+                    s.alert ? "bg-brand-orange/15 text-[#a8471c]" : "bg-primary/25 text-brand-navy"
                   }`}
                 >
                   <s.icon className="w-5 h-5" />
@@ -427,10 +423,10 @@ const Dashboard = () => {
                 <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
               <p className="text-sm text-muted-foreground mt-4">{s.label}</p>
-              <p className="text-3xl font-bold tracking-tight mt-0.5">{s.value}</p>
+              <p className="text-3xl font-extrabold tracking-tight mt-0.5">{s.value}</p>
               <p
                 className={`text-xs mt-1 flex items-center gap-1 ${
-                  s.alert ? "text-red-700 font-medium" : "text-muted-foreground"
+                  s.alert ? "text-[#a8471c] font-semibold" : "text-muted-foreground"
                 }`}
               >
                 {s.alert && <AlertTriangle className="w-3 h-3" />}
@@ -443,7 +439,7 @@ const Dashboard = () => {
 
       <div className="grid gap-4 lg:grid-cols-5">
         {/* ── This period's testing ── */}
-        <Card className="rounded-xl shadow-sm lg:col-span-2">
+        <Card className="rounded-xl lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Test outcomes</CardTitle>
             <p className="text-xs text-muted-foreground">{periodLabel}</p>
@@ -502,19 +498,19 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* ── Countries at a glance (all-countries view) or activity ── */}
+        {/* ── Businesses at a glance (all-businesses view) or activity ── */}
         {showCountries ? (
-          <Card className="rounded-xl shadow-sm lg:col-span-3">
+          <Card className="rounded-xl lg:col-span-3">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Countries at a glance</CardTitle>
+              <CardTitle className="text-base">Businesses at a glance</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Pass rate this period · select a country to focus on it
+                Pass rate this period · select a business to focus on it
               </p>
             </CardHeader>
             <CardContent>
               {countryRows.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6 text-center">
-                  No country data yet.
+                  No business data yet.
                 </p>
               ) : (
                 <ul className="space-y-1">
@@ -584,7 +580,7 @@ const ActivityCard = ({
   onOpen: () => void;
   className?: string;
 }) => (
-  <Card className={`rounded-xl shadow-sm ${className}`}>
+  <Card className={`rounded-xl ${className}`}>
     <CardHeader className="pb-2">
       <CardTitle className="text-base flex items-center gap-2">
         <Activity className="w-4 h-4" /> Recent activity
@@ -599,7 +595,7 @@ const ActivityCard = ({
                 onClick={onOpen}
                 className="w-full flex items-start gap-3 rounded-lg px-2 py-2 text-left hover:bg-muted"
               >
-                <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-primary/20 text-xs font-bold flex items-center justify-center">
+                <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-primary/40 text-brand-navy text-xs font-bold flex items-center justify-center">
                   {(a.user.fullName ?? a.user.email)
                     .split(" ")
                     .map((n) => n[0])

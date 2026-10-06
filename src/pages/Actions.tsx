@@ -115,7 +115,7 @@ const Actions = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Actions</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Actions</h1>
           <p className="text-muted-foreground text-sm">
             Track remediation actions to closure.
           </p>

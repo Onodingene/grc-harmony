@@ -400,7 +400,7 @@ const Testing = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Testing</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Testing</h1>
           <p className="text-muted-foreground text-sm">
             {isOwnerView
               ? "All testing carried out on your controls"
@@ -570,7 +570,7 @@ const Testing = () => {
 
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 grid gap-1.5">
-              <Label>Country</Label>
+              <Label>Business</Label>
               <Select
                 onValueChange={(v) => {
                   setForm((prev) => ({
@@ -580,11 +580,11 @@ const Testing = () => {
                 }}
               >
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select a Country" />
+                  <SelectValue placeholder="Select a Business" />
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
+                  <SelectItem value="all">All Businesses</SelectItem>
 
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>

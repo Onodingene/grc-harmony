@@ -20,7 +20,7 @@ const CountryChecklist = ({ countries, value, onChange }: CountryChecklistProps)
   if (countries.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No countries yet. Add one under the Countries tab.
+        No businesses yet. Add one under the Businesses tab.
       </p>
     );
   }
@@ -48,8 +48,8 @@ const CountryChecklist = ({ countries, value, onChange }: CountryChecklistProps)
       </div>
       <p className="text-xs text-muted-foreground">
         {value.length === 0
-          ? "No country selected — this person will see every country."
-          : "They'll only see these countries' controls, results and people."}
+          ? "No business selected — this person will see every business."
+          : "They'll only see these businesses' controls, results and people."}
       </p>
     </div>
   );

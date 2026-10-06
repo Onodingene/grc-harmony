@@ -673,11 +673,11 @@ const Audit = () => {
   h3 { font-size: 12px; margin: 14px 0 6px; color: #444; }
   .period { color: #555; font-size: 12px; margin-bottom: 16px; }
   .metrics { display: flex; flex-wrap: wrap; gap: 12px; }
-  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #f9d75c; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
+  .metric { border: 1px solid #e5e5e5; border-left: 4px solid #F5D63D; border-radius: 6px; padding: 8px 14px; min-width: 110px; }
   .metric-label { display: block; font-size: 10px; color: #777; text-transform: uppercase; }
   .metric-value { display: block; font-size: 18px; font-weight: bold; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; table-layout: fixed; }
-  th { background: #f9d75c; text-align: left; padding: 6px; word-wrap: break-word; }
+  th { background: #F5D63D; text-align: left; padding: 6px; word-wrap: break-word; }
   td { padding: 6px; border-bottom: 1px solid #eee; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
   .fields th.fld { background: #fbfbfb; width: 170px; color: #555; font-weight: normal; }
   .empty { text-align: center; color: #888; padding: 16px; }
@@ -688,7 +688,7 @@ const Audit = () => {
 <body>
   <h1>Audit Report</h1>
   <div class="period">${esc(company?.name ?? "")} &middot; ${esc(
-      selectedCountry?.name ?? "All Countries",
+      selectedCountry?.name ?? "All Businesses",
     )} &middot; ${esc(new Date().toLocaleDateString())}</div>
 
   <h2>Summary</h2>
@@ -727,7 +727,7 @@ const Audit = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Audit</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Audit</h1>
           <p className="text-muted-foreground text-sm">
             {isResponder
               ? "Audit requests sent to you. Reply and upload the documents requested."

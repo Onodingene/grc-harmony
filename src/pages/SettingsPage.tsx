@@ -334,12 +334,12 @@ const SettingsPage = () => {
     setMembers(update);
     setCompanyMembers(update);
     toast({
-      title: "Countries Updated",
+      title: "Businesses Updated",
       description: editCountryIds.length
         ? `${selectedMember.fullName} now works in ${editCountryIds
             .map((id) => countryName(id))
             .join(", ")}`
-        : `${selectedMember.fullName} can now see every country`,
+        : `${selectedMember.fullName} can now see every business`,
     });
     setCountriesOpen(false);
   };
@@ -503,7 +503,7 @@ const SettingsPage = () => {
       });
     }
     toast({
-      title: "Country Added",
+      title: "Business Added",
       description: source
         ? `${newCountryName} starts with ${res.data?.replicatedControls ?? 0} controls copied from ${source.name}. Assign its own owners and testers next.`
         : newCountryName,
@@ -525,7 +525,7 @@ const SettingsPage = () => {
       return;
     }
     setCountries(countries.filter((c) => c.id !== selectedCountryToDelete.id));
-    toast({ title: "Country Removed" });
+    toast({ title: "Business Removed" });
     setDeleteCountryOpen(false);
   };
 
@@ -571,13 +571,13 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">System Settings & Configuration</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">System Settings & Configuration</h1>
 
       <Tabs defaultValue="team">
         <TabsList>
           <TabsTrigger value="team">Team Members</TabsTrigger>
           <TabsTrigger value="controls">MCS Controls</TabsTrigger>
-          <TabsTrigger value="countries">Countries</TabsTrigger>
+          <TabsTrigger value="countries">Businesses</TabsTrigger>
           <TabsTrigger value="financial-year">Financial Year</TabsTrigger>
         </TabsList>
 
@@ -615,8 +615,8 @@ const SettingsPage = () => {
                 )}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Invite members, assign roles and choose which countries they
-                work in. People only see colleagues in their own countries.
+                Invite members, assign roles and choose which businesses they
+                work in. People only see colleagues in their own businesses.
               </p>
             </div>
             <Button onClick={openInvite}>
@@ -638,7 +638,7 @@ const SettingsPage = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Countries</TableHead>
+                  <TableHead>Businesses</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -660,7 +660,7 @@ const SettingsPage = () => {
                     <TableCell>
                       {m.role === "admin" || !m.countryIds?.length ? (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Globe className="w-3 h-3" /> All countries
+                          <Globe className="w-3 h-3" /> All businesses
                         </span>
                       ) : (
                         <div className="flex flex-wrap gap-1">
@@ -686,7 +686,7 @@ const SettingsPage = () => {
                             setCountriesOpen(true);
                           }}
                         >
-                          <Globe className="w-3 h-3 mr-1" /> Countries
+                          <Globe className="w-3 h-3 mr-1" /> Businesses
                         </Button>
                       )}
                       <Button
@@ -736,12 +736,12 @@ const SettingsPage = () => {
                 MCS Controls
                 <span className="text-muted-foreground font-normal">
                   {" "}
-                  · {selectedCountry?.name ?? "All countries"}
+                  · {selectedCountry?.name ?? "All businesses"}
                 </span>
               </h2>
               <p className="text-sm text-muted-foreground">
-                Each country keeps its own controls, owners and testers. Pick a
-                country in the header to manage just that one.
+                Each business keeps its own controls, owners and testers. Pick a
+                business in the header to manage just that one.
               </p>
             </div>
             <Button onClick={openAddControl}>
@@ -762,7 +762,7 @@ const SettingsPage = () => {
                 <TableRow className="bg-primary/10">
                   <TableHead>Control ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead>Business</TableHead>
                   <TableHead>Key Areas</TableHead>
                   <TableHead>Frequency</TableHead>
                   <TableHead>Status</TableHead>
@@ -833,24 +833,24 @@ const SettingsPage = () => {
         <TabsContent value="countries" className="mt-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">Countries</h2>
+              <h2 className="text-lg font-semibold">Businesses</h2>
               <p className="text-sm text-muted-foreground">
-                Every country runs independently with its own controls, people,
-                tests and issues. A new country can start from another
-                country's controls.
+                Every business runs independently with its own controls, people,
+                tests and issues. A new business can start from another
+                business's controls.
               </p>
             </div>
             <Button onClick={() => setAddCountryOpen(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Add Country
+              <Plus className="w-4 h-4 mr-1" /> Add Business
             </Button>
           </div>
 
           {countries.length === 0 ? (
             <div className="border border-dashed rounded-xl py-12 text-center">
               <Globe className="w-8 h-8 mx-auto text-muted-foreground" />
-              <p className="mt-2 font-medium">No countries yet</p>
+              <p className="mt-2 font-medium">No businesses yet</p>
               <p className="text-sm text-muted-foreground">
-                Add your first country to start setting up controls.
+                Add your first business to start setting up controls.
               </p>
             </div>
           ) : (
@@ -909,8 +909,8 @@ const SettingsPage = () => {
           {countries.length > 0 && everywhereCount > 0 && (
             <p className="text-xs text-muted-foreground">
               {everywhereCount} member{everywhereCount === 1 ? "" : "s"} (admins
-              and anyone without a country) can see every country. Assign
-              countries under Team Members to keep each country separate.
+              and anyone without a business) can see every business. Assign
+              businesses under Team Members to keep each business separate.
             </p>
           )}
         </TabsContent>
@@ -992,7 +992,7 @@ const SettingsPage = () => {
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium">Countries</label>
+              <label className="text-sm font-medium">Businesses</label>
               <div className="mt-1">
                 <CountryChecklist
                   countries={countries}
@@ -1050,10 +1050,10 @@ const SettingsPage = () => {
       <Dialog open={countriesOpen} onOpenChange={setCountriesOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Countries</DialogTitle>
+            <DialogTitle>Businesses</DialogTitle>
             <DialogDescription>
               Choose where {selectedMember?.fullName} works. They'll only see
-              those countries and the people in them.
+              those businesses and the people in them.
             </DialogDescription>
           </DialogHeader>
           <CountryChecklist
@@ -1065,7 +1065,7 @@ const SettingsPage = () => {
             <Button variant="outline" onClick={() => setCountriesOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleMemberCountries}>Save Countries</Button>
+            <Button onClick={handleMemberCountries}>Save Businesses</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1074,16 +1074,16 @@ const SettingsPage = () => {
       <Dialog open={addCountryOpen} onOpenChange={setAddCountryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Country</DialogTitle>
+            <DialogTitle>Add Business</DialogTitle>
             <DialogDescription>
-              A new country is a separate entity with its own people, tests,
+              A new business is a separate entity with its own people, tests,
               issues and audits.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-[1fr_7rem] gap-3">
               <div>
-                <label className="text-sm font-medium">Country name</label>
+                <label className="text-sm font-medium">Business name</label>
                 <Input
                   placeholder="e.g. Ghana"
                   value={newCountryName}
@@ -1123,7 +1123,7 @@ const SettingsPage = () => {
                   Only the control definitions are copied (ID, name, description,
                   key area, risk, frequency, nature and type). Owners, testers,
                   due dates, results, issues and audits start empty — the new
-                  country assigns its own.
+                  business assigns its own.
                 </p>
               </div>
             )}
@@ -1139,7 +1139,7 @@ const SettingsPage = () => {
               }
             >
               <Plus className="w-4 h-4 mr-1" />
-              {addingCountry ? "Adding…" : "Add Country"}
+              {addingCountry ? "Adding…" : "Add Business"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1244,7 +1244,7 @@ const SettingsPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Country</label>
+              <label className="text-sm font-medium">Business</label>
               <Select
                 value={newControl.countryId}
                 onValueChange={(v) => {
@@ -1261,10 +1261,10 @@ const SettingsPage = () => {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder="Select business" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
+                  <SelectItem value="all">All Businesses</SelectItem>
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
@@ -1620,7 +1620,7 @@ const SettingsPage = () => {
       <Dialog open={deleteCountryOpen} onOpenChange={setDeleteCountryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove Country</DialogTitle>
+            <DialogTitle>Remove Business</DialogTitle>
             <DialogDescription>
               Remove {selectedCountryToDelete?.name}? This cannot be undone.
             </DialogDescription>

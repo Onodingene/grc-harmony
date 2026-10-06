@@ -431,7 +431,7 @@ const Issues = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Issues</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Issues</h1>
           <p className="text-muted-foreground text-sm">
             Issues automatically created from failed or exception MCS tests
           </p>

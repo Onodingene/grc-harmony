@@ -148,8 +148,8 @@ const TestPlan = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-xl font-bold">
-          Monthly Test Plan — {selectedCountry?.name ?? "All Countries"}
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Monthly Test Plan — {selectedCountry?.name ?? "All Businesses"}
         </h1>
         <div className="flex items-center gap-3 flex-wrap">
           <Input

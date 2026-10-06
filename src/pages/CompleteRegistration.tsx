@@ -146,9 +146,9 @@ const CompleteRegistration = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Country *</Label>
+                <Label>Business *</Label>
                 <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select business" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NG">Nigeria</SelectItem>
                     <SelectItem value="GH">Ghana</SelectItem>
