@@ -92,6 +92,12 @@ const months = Array.from({ length: 12 }, (_, i) => {
   };
 });
 
+const monthLabel = (period: string) =>
+  new Date(`${period}-01T12:00:00Z`).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
 const emptyForm = {
   controlId: "",
   countryId: "",
@@ -139,6 +145,9 @@ const Testing = () => {
     testProcedure: "",
     comments: "",
     recommendation: "",
+    // When the test was done: the month it reports under and its date.
+    period: "",
+    testedAt: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -324,6 +333,8 @@ const Testing = () => {
       testProcedure: t.testProcedure ?? "",
       comments: t.comments ?? "",
       recommendation: t.recommendation ?? "",
+      period: t.period,
+      testedAt: t.testedAt.slice(0, 10),
     });
   };
 
@@ -333,11 +344,22 @@ const Testing = () => {
       toast({ title: "Test name is required", variant: "destructive" });
       return;
     }
+    if (!editForm.period || !editForm.testedAt) {
+      toast({
+        title: "Select a period and a test date",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSavingEdit(true);
     const res = await apiFetch<TestResult>(`/testing/${editing.id}`, {
       method: "PATCH",
-      body: JSON.stringify(editForm),
+      body: JSON.stringify({
+        ...editForm,
+        // Midday UTC so the date doesn't shift a day in any timezone.
+        testedAt: `${editForm.testedAt}T12:00:00.000Z`,
+      }),
     });
     setSavingEdit(false);
 
@@ -351,17 +373,25 @@ const Testing = () => {
     }
 
     const resultChanged = editing.result !== editForm.result;
+    const moved = editing.period !== editForm.period;
     const clearedIssue = editing.result !== "pass" && editForm.result === "pass";
 
     if (res.data) {
+      // A test moved to another month leaves this month's list.
       setTests((prev) =>
-        prev.map((t) => (t.id === editing.id ? res.data! : t)),
+        res.data!.period === selectedMonth
+          ? prev.map((t) => (t.id === editing.id ? res.data! : t))
+          : prev.filter((t) => t.id !== editing.id),
       );
     }
+    // Moving a test frees or uses up a slot in this month's pending list.
+    if (moved) refreshControlsForFormMonth(selectedMonth);
 
     toast({
       title: "Test updated",
-      description: clearedIssue
+      description: moved
+        ? `Moved to ${monthLabel(editForm.period)}. It now counts in that month's report.`
+        : clearedIssue
         ? "Result now passes — the linked issue was closed."
         : resultChanged
           ? `Result changed to ${editForm.result.toUpperCase()}.`
@@ -864,6 +894,46 @@ const Testing = () => {
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Period</Label>
+              <Select
+                value={editForm.period}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, period: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Keep the test's current month selectable even if it's
+                      older than the last 12 months. */}
+                  {editing && !months.some((m) => m.value === editing.period) && (
+                    <SelectItem value={editing.period}>
+                      {monthLabel(editing.period)}
+                    </SelectItem>
+                  )}
+                  {months.map((m) => (
+                    <SelectItem key={m.key} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                The month this test counts towards in the Monthly Report.
+              </p>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Date tested</Label>
+              <Input
+                type="date"
+                value={editForm.testedAt}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, testedAt: e.target.value }))
+                }
+              />
+            </div>
+
             <div className="col-span-2 grid gap-1.5">
               <Label>Test Name</Label>
               <Input
