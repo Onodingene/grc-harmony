@@ -344,7 +344,7 @@ const Dashboard = () => {
   return (
     <div className={`space-y-6 transition-opacity ${loading ? "opacity-60" : ""}`}>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden rounded-2xl bg-black text-white p-6 md:p-8">
+      <section className="relative overflow-hidden rounded-2xl bg-brand-navy text-white p-6 md:p-8">
         <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-xs">
