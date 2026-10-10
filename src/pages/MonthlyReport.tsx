@@ -190,16 +190,16 @@ interface MonthlyReportData {
 // trailing /api so evidence links resolve to the static file route.
 const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/api\/?$/, "");
 
-// Testing is carried out one month after the activity it covers, so the work
-// stored under period YYYY-MM is reported as the month before it. Only the
-// label shifts — the stored period, and the test dates, are untouched.
+// A test's period is the month it is reported under, the same month the
+// Testing page shows and the test's Edit dialog sets, so the label is the
+// period itself.
 const reportLabelFor = (period: string) => {
   const [yearStr, monthStr] = period.split("-");
   const year = parseInt(yearStr ?? "", 10);
   const monthNum = parseInt(monthStr ?? "", 10);
   if (isNaN(year) || isNaN(monthNum)) return period;
-  // monthNum - 2 because the Date month index is zero-based.
-  return new Date(year, monthNum - 2, 1).toLocaleDateString("en-US", {
+  // monthNum - 1 because the Date month index is zero-based.
+  return new Date(year, monthNum - 1, 1).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });

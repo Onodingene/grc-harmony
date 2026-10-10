@@ -78,12 +78,14 @@ const statusColors: Record<string, string> = {
   fail: "bg-red-100 text-red-800",
 };
 
+// Built from the 1st of each month so a 29th–31st "today" can't skip or repeat
+// a month, and formatted locally so the UTC offset can't shift it either.
 const months = Array.from({ length: 12 }, (_, i) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - i);
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
 
   return {
-    value: d.toISOString().slice(0, 7),
+    value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
     label: d.toLocaleDateString("en-US", {
       month: "long",
       year: "numeric",
