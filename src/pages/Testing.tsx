@@ -374,14 +374,32 @@ const Testing = () => {
       return;
     }
 
+    // A server that predates period editing ignores the new month and still
+    // answers 200, so check what was actually saved.
+    if (res.data && res.data.period !== editForm.period) {
+      toast({
+        title: "Period not changed",
+        description:
+          `The server saved the other changes but kept this test in ${monthLabel(res.data.period)}. Ask an admin to update the backend.`,
+        variant: "destructive",
+      });
+      setTests((prev) =>
+        prev.map((t) => (t.id === editing.id ? res.data! : t)),
+      );
+      setEditing(null);
+      return;
+    }
+
     const resultChanged = editing.result !== editForm.result;
-    const moved = editing.period !== editForm.period;
+    // Trust the saved test, not the form.
+    const savedPeriod = res.data?.period ?? editing.period;
+    const moved = savedPeriod !== editing.period;
     const clearedIssue = editing.result !== "pass" && editForm.result === "pass";
 
     if (res.data) {
       // A test moved to another month leaves this month's list.
       setTests((prev) =>
-        res.data!.period === selectedMonth
+        savedPeriod === selectedMonth
           ? prev.map((t) => (t.id === editing.id ? res.data! : t))
           : prev.filter((t) => t.id !== editing.id),
       );
@@ -392,7 +410,7 @@ const Testing = () => {
     toast({
       title: "Test updated",
       description: moved
-        ? `Moved to ${monthLabel(editForm.period)}. It now counts in that month's report.`
+        ? `Moved to ${monthLabel(savedPeriod)}. It now shows in that month's report and no longer in ${monthLabel(editing.period)}'s.`
         : clearedIssue
         ? "Result now passes — the linked issue was closed."
         : resultChanged
