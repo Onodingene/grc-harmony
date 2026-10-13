@@ -40,6 +40,7 @@ import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
 import { useAuthStore } from "@/lib/authStore";
+import { currentReportPeriod, reportPeriodFor } from "@/lib/period";
 import { useToast } from "@/hooks/use-toast";
 import { getAccessToken } from "@/lib/api";
 
@@ -123,7 +124,8 @@ const Testing = () => {
   // Control owners get a read-only view of testing on the controls they own.
   const isOwnerView = user?.role === "control_owner";
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  // Tests done this month report under last month, so open on last month.
+  const currentMonth = currentReportPeriod();
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [tests, setTests] = useState<TestResult[]>([]);
@@ -939,7 +941,8 @@ const Testing = () => {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                The month this test counts towards in the Monthly Report.
+                The Monthly Report this test counts in. Set automatically to
+                the month before the test date.
               </p>
             </div>
 
@@ -949,7 +952,17 @@ const Testing = () => {
                 type="date"
                 value={editForm.testedAt}
                 onChange={(e) =>
-                  setEditForm((f) => ({ ...f, testedAt: e.target.value }))
+                  setEditForm((f) => ({
+                    ...f,
+                    testedAt: e.target.value,
+                    // The report month follows the test date: the month
+                    // before it. It can still be changed by hand above.
+                    ...(e.target.value && {
+                      period: reportPeriodFor(
+                        new Date(`${e.target.value}T12:00:00`),
+                      ),
+                    }),
+                  }))
                 }
               />
             </div>

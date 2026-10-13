@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import { openEvidence } from "@/lib/evidence";
 import { useCountryStore } from "@/lib/countryStore";
+import { currentReportPeriod } from "@/lib/period";
 import logo from "@/assets/logo.jpeg";
 
 // Brand chart colours (see --brand-* tokens in index.css).
@@ -227,8 +228,8 @@ const MonthlyReport = () => {
 
   const monthOptions = generateMonthOptions();
 
-  // Default to current month in YYYY-MM format
-  const [month, setMonth] = useState<string>(monthOptions[0]?.value ?? "");
+  // Default to the month being tested now (last month)
+  const [month, setMonth] = useState<string>(currentReportPeriod());
 
   const fetchReport = (countryId: string, selectedMonth: string) => {
     setLoading(true);

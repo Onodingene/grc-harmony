@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
+import { currentReportPeriod } from "@/lib/period";
 
 // Brand colours (see --brand-* tokens in index.css).
 const C = {
@@ -82,7 +83,7 @@ const RAGDot = ({ rate }: { rate: number }) => (
 
 const Consolidated = () => {
   const monthOptions = generateMonthOptions();
-  const [period, setPeriod] = useState(monthOptions[0].value);
+  const [period, setPeriod] = useState(currentReportPeriod());
   const [data, setData] = useState<ConsolidatedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<CountryRow | null>(null);
